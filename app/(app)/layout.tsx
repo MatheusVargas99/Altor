@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { logout } from '@/app/login/actions';
+import { ToasterProvider } from '@/components/ui/Toaster';
 
 const nav = [
   { href: '/dashboard', label: 'Dashboard' },
@@ -54,7 +55,9 @@ export default async function AppLayout({
           </button>
         </form>
       </aside>
-      <main className="flex-1 overflow-x-hidden">{children}</main>
+      <main className="flex-1 overflow-x-hidden">
+        <ToasterProvider>{children}</ToasterProvider>
+      </main>
     </div>
   );
 }
