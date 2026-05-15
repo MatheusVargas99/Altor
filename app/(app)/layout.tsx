@@ -16,6 +16,7 @@ const nav = [
   { href: '/compras', label: 'Compras' },
   { href: '/medicoes', label: 'Medições' },
   { href: '/cronograma', label: 'Cronograma' },
+  { href: '/contratos', label: 'Contratos' },
   { href: '/relatorios', label: 'Relatórios' },
 ];
 
