@@ -1,25 +1,42 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
+import {
+  LayoutDashboard,
+  CalendarDays,
+  Building2,
+  Briefcase,
+  Users,
+  ArrowDownToLine,
+  ArrowUpFromLine,
+  BadgePercent,
+  FileText,
+  ShoppingCart,
+  Ruler,
+  GanttChart,
+  ScrollText,
+  BarChart2,
+  UserCog,
+} from 'lucide-react';
 import { createClient } from '@/lib/supabase/server';
 import { logout } from '@/app/login/actions';
 import { ToasterProvider } from '@/components/ui/Toaster';
 
 const nav = [
-  { href: '/dashboard', label: 'Dashboard' },
-  { href: '/agenda', label: 'Agenda' },
-  { href: '/empreendimentos', label: 'Empreendimentos' },
-  { href: '/empresas', label: 'Empresas' },
-  { href: '/clientes', label: 'Clientes' },
-  { href: '/contas-receber', label: 'Contas a Receber' },
-  { href: '/contas-pagar', label: 'Contas a Pagar' },
-  { href: '/comissoes', label: 'Comissões' },
-  { href: '/orcamentos', label: 'Orçamentos' },
-  { href: '/compras', label: 'Compras' },
-  { href: '/medicoes', label: 'Medições' },
-  { href: '/cronograma', label: 'Cronograma' },
-  { href: '/contratos', label: 'Contratos' },
-  { href: '/relatorios', label: 'Relatórios' },
+  { href: '/dashboard',      label: 'Dashboard',        icon: LayoutDashboard },
+  { href: '/agenda',         label: 'Agenda',           icon: CalendarDays },
+  { href: '/empreendimentos',label: 'Empreendimentos',  icon: Building2 },
+  { href: '/empresas',       label: 'Empresas',         icon: Briefcase },
+  { href: '/clientes',       label: 'Clientes',         icon: Users },
+  { href: '/contas-receber', label: 'Contas a Receber', icon: ArrowDownToLine },
+  { href: '/contas-pagar',   label: 'Contas a Pagar',   icon: ArrowUpFromLine },
+  { href: '/comissoes',      label: 'Comissões',        icon: BadgePercent },
+  { href: '/orcamentos',     label: 'Orçamentos',       icon: FileText },
+  { href: '/compras',        label: 'Compras',          icon: ShoppingCart },
+  { href: '/medicoes',       label: 'Medições',         icon: Ruler },
+  { href: '/cronograma',     label: 'Cronograma',       icon: GanttChart },
+  { href: '/contratos',      label: 'Contratos',        icon: ScrollText },
+  { href: '/relatorios',     label: 'Relatórios',       icon: BarChart2 },
 ];
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -50,15 +67,19 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
         {/* Navegação */}
         <nav className="flex-1 overflow-y-auto px-2 py-3 space-y-0.5">
-          {nav.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className="block rounded px-3 py-2 text-sm text-text hover:bg-bg-3 hover:text-primary transition-colors"
-            >
-              {item.label}
-            </Link>
-          ))}
+          {nav.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="flex items-center gap-2.5 rounded px-3 py-2 text-sm text-text hover:bg-bg-3 hover:text-primary transition-colors"
+              >
+                <Icon size={15} className="shrink-0 opacity-60" />
+                {item.label}
+              </Link>
+            );
+          })}
 
           {isAdmin && (
             <>
@@ -67,8 +88,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
               </div>
               <Link
                 href="/usuarios"
-                className="block rounded px-3 py-2 text-sm text-text hover:bg-bg-3 hover:text-primary transition-colors"
+                className="flex items-center gap-2.5 rounded px-3 py-2 text-sm text-text hover:bg-bg-3 hover:text-primary transition-colors"
               >
+                <UserCog size={15} className="shrink-0 opacity-60" />
                 Usuários
               </Link>
             </>

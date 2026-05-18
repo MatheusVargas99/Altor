@@ -554,7 +554,17 @@ export function RelatoriosClient({
         </div>
       </div>
 
-      {/* Cronograma preview (only when obra selected) */}
+      {/* Cronograma preview */}
+      {obraAtual && cronoRows.length === 0 && (
+        <div className="rounded border border-border px-4 py-6 text-center text-sm text-text-dim">
+          Nenhuma etapa de cronograma encontrada para este empreendimento. Inicialize o cronograma na aba <strong>Cronograma</strong>.
+        </div>
+      )}
+      {!obraAtual && (
+        <div className="rounded border border-border bg-bg-2 px-4 py-4 text-sm text-text-dim">
+          Selecione um <strong className="text-text">empreendimento</strong> para incluir o cronograma da obra no relatório.
+        </div>
+      )}
       {cronoRows.length > 0 && (
         <div>
           <h3 className="text-sm font-medium text-text mb-2">Cronograma da Obra</h3>
