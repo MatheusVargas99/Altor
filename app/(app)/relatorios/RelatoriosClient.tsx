@@ -61,76 +61,207 @@ export function RelatoriosClient({
   const saldo = totalCRPago - totalCPPago;
 
   const handleGerarPDF = () => {
-    const titulo = `Relatório ${tipoAtual} — ${obraInfo ? obraInfo.nome : 'Todas obras'}`;
-    const periodo = `Período: ${fmtDate(periodoInicio)} a ${fmtDate(periodoFim)}`;
-    const geradoEm = `Gerado em: ${new Date().toLocaleString('pt-BR')}`;
+    const tipoLabel: Record<string, string> = { SEMANAL: 'Semanal', QUINZENAL: 'Quinzenal', MENSAL: 'Mensal' };
+    const obraLabel = obraInfo ? obraInfo.nome : 'Todas as obras';
+    const geradoEm = new Date().toLocaleString('pt-BR', { dateStyle: 'long', timeStyle: 'short' });
 
-    const crHtml = crRows.length === 0 ? '<tr><td colspan="5" style="text-align:center;color:#888">Nenhum registro</td></tr>' :
-      crRows.map((r) => `
-        <tr>
-          <td>${r.descricao}${r.numero_parcela ? ` (${r.numero_parcela})` : ''}</td>
-          <td>${fmtDate(r.data_vencimento)}</td>
-          <td style="text-align:right">${fmtBRL(Number(r.valor_original))}</td>
-          <td style="text-align:right">${fmtBRL(Number(r.valor_pago))}</td>
-          <td><span style="padding:2px 6px;border-radius:3px;font-size:11px;background:${r.status === 'PAGO' ? '#d1fae5' : r.status === 'ATRASADO' ? '#fee2e2' : '#fef3c7'};color:${r.status === 'PAGO' ? '#065f46' : r.status === 'ATRASADO' ? '#991b1b' : '#92400e'}">${r.status}</span></td>
+    const statusBadge = (s: string) => {
+      const bg = s === 'PAGO' ? '#e6f4ee' : s === 'ATRASADO' ? '#fde8e8' : '#fef9e7';
+      const color = s === 'PAGO' ? '#1a6b3c' : s === 'ATRASADO' ? '#a31515' : '#7a5c00';
+      return `<span style="display:inline-block;padding:2px 7px;border-radius:3px;font-size:10px;font-weight:600;letter-spacing:.4px;background:${bg};color:${color}">${s}</span>`;
+    };
+
+    const crHtml = crRows.length === 0
+      ? '<tr><td colspan="5" style="text-align:center;padding:12px;color:#888;font-style:italic">Nenhum lançamento no período</td></tr>'
+      : crRows.map((r, i) => `
+        <tr style="background:${i % 2 === 0 ? '#ffffff' : '#f9f7f3'}">
+          <td style="padding:6px 10px">${r.descricao}${r.numero_parcela ? ` <span style="color:#888;font-size:11px">(${r.numero_parcela})</span>` : ''}</td>
+          <td style="padding:6px 10px;white-space:nowrap">${fmtDate(r.data_vencimento)}</td>
+          <td style="padding:6px 10px;text-align:right;white-space:nowrap">${fmtBRL(Number(r.valor_original))}</td>
+          <td style="padding:6px 10px;text-align:right;white-space:nowrap;font-weight:600;color:#1a6b3c">${fmtBRL(Number(r.valor_pago))}</td>
+          <td style="padding:6px 10px">${statusBadge(r.status)}</td>
         </tr>`).join('');
 
-    const cpHtml = cpRows.length === 0 ? '<tr><td colspan="6" style="text-align:center;color:#888">Nenhum registro</td></tr>' :
-      cpRows.map((r) => `
-        <tr>
-          <td>${r.descricao}${r.numero_documento ? ` (${r.numero_documento})` : ''}</td>
-          <td>${r.categoria?.replaceAll('_', ' ') ?? '—'}</td>
-          <td>${fmtDate(r.data_vencimento)}</td>
-          <td style="text-align:right">${fmtBRL(Number(r.valor_original))}</td>
-          <td style="text-align:right">${fmtBRL(Number(r.valor_pago))}</td>
-          <td><span style="padding:2px 6px;border-radius:3px;font-size:11px;background:${r.status === 'PAGO' ? '#d1fae5' : r.status === 'ATRASADO' ? '#fee2e2' : '#fef3c7'};color:${r.status === 'PAGO' ? '#065f46' : r.status === 'ATRASADO' ? '#991b1b' : '#92400e'}">${r.status}</span></td>
+    const cpHtml = cpRows.length === 0
+      ? '<tr><td colspan="6" style="text-align:center;padding:12px;color:#888;font-style:italic">Nenhum lançamento no período</td></tr>'
+      : cpRows.map((r, i) => `
+        <tr style="background:${i % 2 === 0 ? '#ffffff' : '#f9f7f3'}">
+          <td style="padding:6px 10px">${r.descricao}${r.numero_documento ? ` <span style="color:#888;font-size:11px">(${r.numero_documento})</span>` : ''}</td>
+          <td style="padding:6px 10px;font-size:11px;color:#555">${r.categoria?.replaceAll('_', ' ') ?? '—'}</td>
+          <td style="padding:6px 10px;white-space:nowrap">${fmtDate(r.data_vencimento)}</td>
+          <td style="padding:6px 10px;text-align:right;white-space:nowrap">${fmtBRL(Number(r.valor_original))}</td>
+          <td style="padding:6px 10px;text-align:right;white-space:nowrap;font-weight:600;color:#a31515">${fmtBRL(Number(r.valor_pago))}</td>
+          <td style="padding:6px 10px">${statusBadge(r.status)}</td>
         </tr>`).join('');
 
     const html = `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>${titulo}</title>
+<title>Relatório ${tipoLabel[tipoAtual]} — ${obraLabel}</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: Arial, sans-serif; font-size: 13px; color: #1a1a1a; padding: 24px; }
-  h1 { font-size: 20px; color: #92600a; margin-bottom: 4px; }
-  .meta { color: #555; font-size: 12px; margin-bottom: 20px; }
-  h2 { font-size: 15px; color: #333; margin: 20px 0 8px; border-bottom: 2px solid #C9A961; padding-bottom: 4px; }
-  table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
-  th { background: #f5f0e8; text-align: left; padding: 6px 8px; font-size: 12px; border: 1px solid #ddd; }
-  td { padding: 5px 8px; border: 1px solid #eee; font-size: 12px; }
-  tr:nth-child(even) { background: #fafafa; }
-  .summary { background: #f5f0e8; padding: 12px 16px; border-radius: 6px; margin-top: 16px; }
-  .summary-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 13px; }
-  .summary-row.total { font-weight: bold; border-top: 1px solid #C9A961; margin-top: 4px; padding-top: 6px; }
-  .pos { color: #065f46; } .neg { color: #991b1b; }
-  @media print { body { padding: 10px; } }
+  body { font-family: Arial, Helvetica, sans-serif; font-size: 12px; color: #1a1a1a; background: #fff; }
+
+  /* Cabeçalho */
+  .header { background: #0A0A0A; color: #F5F1E8; padding: 28px 36px 20px; display: flex; align-items: center; justify-content: space-between; }
+  .header-left { display: flex; align-items: center; gap: 16px; }
+  .logo-mark { width: 44px; height: 44px; }
+  .brand-name { font-family: Georgia, 'Times New Roman', serif; font-size: 22px; letter-spacing: 6px; color: #B8923A; text-transform: uppercase; line-height: 1; }
+  .brand-sub { font-size: 9px; letter-spacing: 4px; color: #888; text-transform: uppercase; margin-top: 3px; }
+  .header-right { text-align: right; font-size: 11px; color: #aaa; line-height: 1.6; }
+
+  /* Linha dourada */
+  .gold-rule { height: 2px; background: linear-gradient(90deg, #B8923A 0%, #E8C97A 50%, #B8923A 100%); }
+
+  /* Metadados do relatório */
+  .report-meta { padding: 18px 36px; background: #F5F1E8; border-bottom: 1px solid #e0d8cc; display: flex; justify-content: space-between; align-items: center; }
+  .report-title { font-family: Georgia, serif; font-size: 16px; color: #0A0A0A; font-weight: normal; }
+  .report-period { font-size: 11px; color: #4A4A4A; }
+  .report-obra { font-size: 11px; color: #B8923A; font-weight: 600; margin-top: 2px; }
+
+  /* Conteúdo */
+  .content { padding: 24px 36px; }
+  .section-title { font-family: Georgia, serif; font-size: 13px; font-weight: normal; color: #0A0A0A; text-transform: uppercase; letter-spacing: 2px; margin: 24px 0 8px; padding-bottom: 6px; border-bottom: 1.5px solid #B8923A; }
+
+  table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+  thead tr { background: #0A0A0A; }
+  thead th { padding: 8px 10px; text-align: left; font-size: 10px; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; color: #F5F1E8; border: none; }
+  thead th.right { text-align: right; }
+  tbody tr { border-bottom: 1px solid #ece8e0; }
+  tbody td { font-size: 12px; color: #1a1a1a; border: none; }
+  .table-count { font-size: 10px; color: #888; text-align: right; margin-bottom: 4px; }
+
+  /* Resumo financeiro */
+  .summary { background: #0A0A0A; color: #F5F1E8; border-radius: 4px; overflow: hidden; margin-top: 24px; }
+  .summary-title { padding: 12px 20px; font-family: Georgia, serif; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #B8923A; border-bottom: 1px solid #222; }
+  .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+  .summary-item { padding: 14px 20px; border-bottom: 1px solid #1a1a1a; }
+  .summary-item:nth-child(even) { border-left: 1px solid #1a1a1a; }
+  .summary-label { font-size: 10px; color: #888; letter-spacing: .5px; text-transform: uppercase; margin-bottom: 4px; }
+  .summary-value { font-size: 16px; font-weight: 700; }
+  .summary-total { padding: 16px 20px; border-top: 2px solid #B8923A; display: flex; justify-content: space-between; align-items: center; }
+  .summary-total-label { font-size: 11px; color: #aaa; letter-spacing: 1px; text-transform: uppercase; }
+  .summary-total-value { font-family: Georgia, serif; font-size: 20px; font-weight: 700; }
+  .pos { color: #4ade80; }
+  .neg { color: #f87171; }
+  .neutral { color: #F5F1E8; }
+
+  /* Rodapé */
+  .footer { margin-top: 32px; padding: 16px 36px; border-top: 1px solid #e0d8cc; display: flex; justify-content: space-between; align-items: center; }
+  .footer-brand { font-family: Georgia, serif; font-size: 10px; letter-spacing: 3px; color: #B8923A; text-transform: uppercase; }
+  .footer-meta { font-size: 10px; color: #aaa; text-align: right; }
+
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .header { -webkit-print-color-adjust: exact; }
+    .summary { -webkit-print-color-adjust: exact; }
+  }
 </style>
 </head>
 <body>
-<h1>ALTOR — ${titulo}</h1>
-<div class="meta">${periodo} &nbsp;·&nbsp; ${geradoEm}</div>
 
-<h2>Contas a Receber (${crRows.length} lançamento(s))</h2>
-<table>
-  <thead><tr><th>Descrição</th><th>Vencimento</th><th style="text-align:right">Valor</th><th style="text-align:right">Pago</th><th>Status</th></tr></thead>
-  <tbody>${crHtml}</tbody>
-</table>
-
-<h2>Contas a Pagar (${cpRows.length} lançamento(s))</h2>
-<table>
-  <thead><tr><th>Descrição</th><th>Categoria</th><th>Vencimento</th><th style="text-align:right">Valor</th><th style="text-align:right">Pago</th><th>Status</th></tr></thead>
-  <tbody>${cpHtml}</tbody>
-</table>
-
-<div class="summary">
-  <div class="summary-row"><span>Total a receber no período</span><span>${fmtBRL(totalCROriginal)}</span></div>
-  <div class="summary-row"><span>Total recebido no período</span><span class="pos">${fmtBRL(totalCRPago)}</span></div>
-  <div class="summary-row"><span>Total a pagar no período</span><span>${fmtBRL(totalCPOriginal)}</span></div>
-  <div class="summary-row"><span>Total pago no período</span><span class="neg">${fmtBRL(totalCPPago)}</span></div>
-  <div class="summary-row total"><span>Resultado do período (recebido - pago)</span><span class="${saldo >= 0 ? 'pos' : 'neg'}">${fmtBRL(saldo)}</span></div>
+<!-- Cabeçalho Altor -->
+<div class="header">
+  <div class="header-left">
+    <svg class="logo-mark" viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M28 6 L50 50 H6 Z" fill="none" stroke="#B8923A" stroke-width="2.5" stroke-linejoin="round"/>
+      <line x1="16.5" y1="37" x2="39.5" y2="37" stroke="#B8923A" stroke-width="2.5" stroke-linecap="round"/>
+    </svg>
+    <div>
+      <div class="brand-name">Altor</div>
+      <div class="brand-sub">Construtora e Incorporadora</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div>Relatório Financeiro</div>
+    <div>${tipoLabel[tipoAtual]}</div>
+    <div>${geradoEm}</div>
+  </div>
 </div>
+<div class="gold-rule"></div>
+
+<!-- Metadados -->
+<div class="report-meta">
+  <div>
+    <div class="report-title">Relatório ${tipoLabel[tipoAtual]} de Contas</div>
+    <div class="report-obra">${obraLabel}</div>
+  </div>
+  <div class="report-period">
+    Período: ${fmtDate(periodoInicio)} a ${fmtDate(periodoFim)}
+  </div>
+</div>
+
+<div class="content">
+
+  <!-- Contas a Receber -->
+  <div class="section-title">Contas a Receber</div>
+  <div class="table-count">${crRows.length} lançamento(s)</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Descrição</th>
+        <th>Vencimento</th>
+        <th class="right">Valor</th>
+        <th class="right">Recebido</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>${crHtml}</tbody>
+  </table>
+
+  <!-- Contas a Pagar -->
+  <div class="section-title">Contas a Pagar</div>
+  <div class="table-count">${cpRows.length} lançamento(s)</div>
+  <table>
+    <thead>
+      <tr>
+        <th>Descrição</th>
+        <th>Categoria</th>
+        <th>Vencimento</th>
+        <th class="right">Valor</th>
+        <th class="right">Pago</th>
+        <th>Status</th>
+      </tr>
+    </thead>
+    <tbody>${cpHtml}</tbody>
+  </table>
+
+  <!-- Resumo financeiro -->
+  <div class="summary">
+    <div class="summary-title">Resumo do Período</div>
+    <div class="summary-grid">
+      <div class="summary-item">
+        <div class="summary-label">A receber (total)</div>
+        <div class="summary-value neutral">${fmtBRL(totalCROriginal)}</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">Recebido</div>
+        <div class="summary-value pos">${fmtBRL(totalCRPago)}</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">A pagar (total)</div>
+        <div class="summary-value neutral">${fmtBRL(totalCPOriginal)}</div>
+      </div>
+      <div class="summary-item">
+        <div class="summary-label">Pago</div>
+        <div class="summary-value neg">${fmtBRL(totalCPPago)}</div>
+      </div>
+    </div>
+    <div class="summary-total">
+      <div class="summary-total-label">Resultado do período</div>
+      <div class="summary-total-value ${saldo >= 0 ? 'pos' : 'neg'}">${fmtBRL(saldo)}</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Rodapé -->
+<div class="footer">
+  <div class="footer-brand">Altor — Construtora e Incorporadora</div>
+  <div class="footer-meta">Documento gerado em ${geradoEm}<br>Uso interno — confidencial</div>
+</div>
+
 </body>
 </html>`;
 

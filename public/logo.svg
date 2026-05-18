@@ -1,0 +1,6 @@
+<svg viewBox="0 0 56 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Triângulo A — monograma Altor -->
+  <path d="M28 6 L50 50 H6 Z" fill="none" stroke="#B8923A" stroke-width="3" stroke-linejoin="round"/>
+  <!-- Barra do A -->
+  <line x1="16.5" y1="37" x2="39.5" y2="37" stroke="#B8923A" stroke-width="3" stroke-linecap="round"/>
+</svg>
