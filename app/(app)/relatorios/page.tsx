@@ -58,7 +58,19 @@ export default async function RelatoriosPage({
     cpQuery = cpQuery.eq('empreendimento_id', obraId);
   }
 
-  const [{ data: crRows }, { data: cpRows }] = await Promise.all([crQuery, cpQuery]);
+  const cronoQuery = obraId
+    ? supabase
+        .from('cronograma')
+        .select('etapa, marco, descricao, ordem, peso, percentual_fisico, status, custo_orcado, custo_comprometido, custo_pago, data_inicio_prevista, data_fim_prevista')
+        .eq('empreendimento_id', obraId)
+        .order('ordem')
+    : null;
+
+  const [{ data: crRows }, { data: cpRows }, cronoResult] = await Promise.all([
+    crQuery,
+    cpQuery,
+    cronoQuery ?? Promise.resolve({ data: [] }),
+  ]);
 
   return (
     <div className="p-6 space-y-5">
@@ -75,6 +87,7 @@ export default async function RelatoriosPage({
         obraInfo={obraInfo ? { nome: obraInfo.nome } : null}
         crRows={(crRows ?? []) as { descricao: string; numero_parcela: string | null; valor_original: number; valor_pago: number; data_vencimento: string; data_pagamento: string | null; status: string }[]}
         cpRows={(cpRows ?? []) as { descricao: string; numero_documento: string | null; valor_original: number; valor_pago: number; data_vencimento: string; data_pagamento: string | null; status: string; categoria: string | null }[]}
+        cronoRows={(cronoResult.data ?? []) as { etapa: string; marco: string; descricao: string | null; ordem: number; peso: number; percentual_fisico: number; status: string; custo_orcado: number; custo_comprometido: number; custo_pago: number; data_inicio_prevista: string | null; data_fim_prevista: string | null }[]}
       />
     </div>
   );

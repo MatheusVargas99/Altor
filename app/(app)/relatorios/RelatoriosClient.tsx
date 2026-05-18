@@ -23,6 +23,21 @@ type CPRow = {
   categoria: string | null;
 };
 
+type CronoRow = {
+  etapa: string;
+  marco: string;
+  descricao: string | null;
+  ordem: number;
+  peso: number;
+  percentual_fisico: number;
+  status: string;
+  custo_orcado: number;
+  custo_comprometido: number;
+  custo_pago: number;
+  data_inicio_prevista: string | null;
+  data_fim_prevista: string | null;
+};
+
 function fmtBRL(v: number) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 }
@@ -42,6 +57,7 @@ export function RelatoriosClient({
   obraInfo,
   crRows,
   cpRows,
+  cronoRows,
 }: {
   empreendimentos: { id: string; nome: string; codigo_curto: string | null }[];
   obraAtual: string;
@@ -51,6 +67,7 @@ export function RelatoriosClient({
   obraInfo: { nome: string } | null;
   crRows: CRRow[];
   cpRows: CPRow[];
+  cronoRows: CronoRow[];
 }) {
   const router = useRouter();
 
@@ -59,6 +76,15 @@ export function RelatoriosClient({
   const totalCPOriginal = cpRows.reduce((s, r) => s + Number(r.valor_original), 0);
   const totalCPPago = cpRows.reduce((s, r) => s + Number(r.valor_pago), 0);
   const saldo = totalCRPago - totalCPPago;
+
+  // Cronograma metrics
+  const totalPeso = cronoRows.reduce((s, r) => s + Number(r.peso), 0);
+  const progressoPonderado = totalPeso > 0
+    ? cronoRows.reduce((s, r) => s + Number(r.percentual_fisico) * Number(r.peso), 0) / totalPeso
+    : 0;
+  const totalOrcado = cronoRows.reduce((s, r) => s + Number(r.custo_orcado), 0);
+  const totalComprometido = cronoRows.reduce((s, r) => s + Number(r.custo_comprometido), 0);
+  const totalPago = cronoRows.reduce((s, r) => s + Number(r.custo_pago), 0);
 
   const handleGerarPDF = () => {
     const tipoLabel: Record<string, string> = { SEMANAL: 'Semanal', QUINZENAL: 'Quinzenal', MENSAL: 'Mensal' };
@@ -70,6 +96,99 @@ export function RelatoriosClient({
       const color = s === 'PAGO' ? '#1a6b3c' : s === 'ATRASADO' ? '#a31515' : '#7a5c00';
       return `<span style="display:inline-block;padding:2px 7px;border-radius:3px;font-size:10px;font-weight:600;letter-spacing:.4px;background:${bg};color:${color}">${s}</span>`;
     };
+
+    const statusCronoLabel: Record<string, string> = {
+      NAO_INICIADA: 'Não iniciada',
+      EM_ANDAMENTO: 'Em andamento',
+      CONCLUIDA: 'Concluída',
+      ATRASADA: 'Atrasada',
+      PAUSADA: 'Pausada',
+    };
+    const statusCronoBadge = (s: string) => {
+      const map: Record<string, [string, string]> = {
+        CONCLUIDA:    ['#e6f4ee', '#1a6b3c'],
+        EM_ANDAMENTO: ['#e8f0fe', '#1a4bb5'],
+        ATRASADA:     ['#fde8e8', '#a31515'],
+        PAUSADA:      ['#fef9e7', '#7a5c00'],
+        NAO_INICIADA: ['#f0f0f0', '#666'],
+      };
+      const [bg, color] = map[s] ?? ['#f0f0f0', '#666'];
+      return `<span style="display:inline-block;padding:2px 7px;border-radius:3px;font-size:10px;font-weight:600;letter-spacing:.4px;background:${bg};color:${color}">${statusCronoLabel[s] ?? s}</span>`;
+    };
+
+    const progBar = (pct: number) => {
+      const w = Math.min(100, Math.max(0, pct));
+      const color = w >= 100 ? '#1a6b3c' : w >= 50 ? '#B8923A' : '#4A4A4A';
+      return `<div style="background:#e8e4dc;border-radius:3px;height:7px;width:100%;min-width:60px">
+        <div style="background:${color};height:7px;border-radius:3px;width:${w}%"></div>
+      </div><span style="font-size:10px;color:#555;margin-left:4px">${w.toFixed(0)}%</span>`;
+    };
+
+    const cronoHtml = cronoRows.length === 0
+      ? ''
+      : `
+  <!-- Cronograma -->
+  <div class="section-title" style="margin-top:32px">Andamento da Obra — Cronograma Físico-Financeiro</div>
+
+  <!-- Progresso geral -->
+  <div style="background:#F5F1E8;border:1px solid #e0d8cc;border-radius:4px;padding:16px 20px;margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <span style="font-family:Georgia,serif;font-size:13px;color:#0A0A0A">Progresso físico geral</span>
+      <span style="font-family:Georgia,serif;font-size:20px;font-weight:700;color:#B8923A">${progressoPonderado.toFixed(1)}%</span>
+    </div>
+    <div style="background:#e0d8cc;border-radius:4px;height:10px">
+      <div style="background:linear-gradient(90deg,#B8923A,#E8C97A);height:10px;border-radius:4px;width:${Math.min(100, progressoPonderado).toFixed(1)}%"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;margin-top:12px">
+      <div style="padding:0 16px 0 0;border-right:1px solid #e0d8cc">
+        <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.5px">Total Orçado</div>
+        <div style="font-size:14px;font-weight:700;color:#0A0A0A;margin-top:2px">${fmtBRL(totalOrcado)}</div>
+      </div>
+      <div style="padding:0 16px;border-right:1px solid #e0d8cc">
+        <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.5px">Comprometido</div>
+        <div style="font-size:14px;font-weight:700;color:#B8923A;margin-top:2px">${fmtBRL(totalComprometido)}</div>
+      </div>
+      <div style="padding:0 0 0 16px">
+        <div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:.5px">Pago</div>
+        <div style="font-size:14px;font-weight:700;color:#1a6b3c;margin-top:2px">${fmtBRL(totalPago)}</div>
+      </div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Marco</th>
+        <th>Etapa</th>
+        <th style="text-align:center">% Físico</th>
+        <th class="right">Orçado</th>
+        <th class="right">Compromet.</th>
+        <th class="right">Pago</th>
+        <th style="text-align:center">Status</th>
+        <th>Prev. Fim</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${cronoRows.map((r, i) => {
+        const orcado = Number(r.custo_orcado);
+        const comprometido = Number(r.custo_comprometido);
+        const pago = Number(r.custo_pago);
+        const pct = Number(r.percentual_fisico);
+        return `<tr style="background:${i % 2 === 0 ? '#ffffff' : '#f9f7f3'}">
+          <td style="padding:6px 10px;font-weight:600;color:#B8923A;white-space:nowrap">${r.marco}</td>
+          <td style="padding:6px 10px;font-size:11px">${r.etapa.replaceAll('_', ' ')}</td>
+          <td style="padding:6px 10px;min-width:90px">
+            <div style="display:flex;align-items:center;gap:4px">${progBar(pct)}</div>
+          </td>
+          <td style="padding:6px 10px;text-align:right;white-space:nowrap">${orcado > 0 ? fmtBRL(orcado) : '—'}</td>
+          <td style="padding:6px 10px;text-align:right;white-space:nowrap">${comprometido > 0 ? fmtBRL(comprometido) : '—'}</td>
+          <td style="padding:6px 10px;text-align:right;white-space:nowrap">${pago > 0 ? fmtBRL(pago) : '—'}</td>
+          <td style="padding:6px 10px;text-align:center">${statusCronoBadge(r.status)}</td>
+          <td style="padding:6px 10px;font-size:11px;white-space:nowrap">${fmtDate(r.data_fim_prevista)}</td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table>`;
 
     const crHtml = crRows.length === 0
       ? '<tr><td colspan="5" style="text-align:center;padding:12px;color:#888;font-style:italic">Nenhum lançamento no período</td></tr>'
@@ -226,6 +345,8 @@ export function RelatoriosClient({
     </thead>
     <tbody>${cpHtml}</tbody>
   </table>
+
+  ${cronoHtml}
 
   <!-- Resumo financeiro -->
   <div class="summary">
@@ -432,6 +553,88 @@ export function RelatoriosClient({
           </table>
         </div>
       </div>
+
+      {/* Cronograma preview (only when obra selected) */}
+      {cronoRows.length > 0 && (
+        <div>
+          <h3 className="text-sm font-medium text-text mb-2">Cronograma da Obra</h3>
+
+          {/* Progresso geral */}
+          <div className="card mb-3 space-y-2">
+            <div className="flex justify-between items-center">
+              <span className="text-xs text-text-dim uppercase tracking-wide">Progresso físico geral</span>
+              <span className="text-lg font-bold text-primary">{progressoPonderado.toFixed(1)}%</span>
+            </div>
+            <div className="h-2.5 rounded-full bg-bg-3 overflow-hidden">
+              <div
+                className="h-full rounded-full bg-primary transition-all"
+                style={{ width: `${Math.min(100, progressoPonderado)}%` }}
+              />
+            </div>
+            <div className="grid grid-cols-3 gap-3 pt-1 border-t border-border">
+              <div>
+                <div className="text-xs text-text-dim">Orçado</div>
+                <div className="text-sm font-semibold text-text">{fmtBRL(totalOrcado)}</div>
+              </div>
+              <div>
+                <div className="text-xs text-text-dim">Comprometido</div>
+                <div className="text-sm font-semibold text-warn">{fmtBRL(totalComprometido)}</div>
+              </div>
+              <div>
+                <div className="text-xs text-text-dim">Pago</div>
+                <div className="text-sm font-semibold text-success">{fmtBRL(totalPago)}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Etapas table */}
+          <div className="overflow-x-auto rounded border border-border">
+            <table className="w-full text-xs">
+              <thead className="bg-bg-3 text-text-dim">
+                <tr>
+                  <th className="px-3 py-2 text-left">Marco</th>
+                  <th className="px-3 py-2 text-left">Etapa</th>
+                  <th className="px-3 py-2 text-center">% Físico</th>
+                  <th className="px-3 py-2 text-right">Orçado</th>
+                  <th className="px-3 py-2 text-right">Comprometido</th>
+                  <th className="px-3 py-2 text-left">Status</th>
+                  <th className="px-3 py-2 text-left">Prev. Fim</th>
+                </tr>
+              </thead>
+              <tbody>
+                {cronoRows.map((r, i) => (
+                  <tr key={i} className="border-t border-border">
+                    <td className="px-3 py-1.5 font-semibold text-primary">{r.marco}</td>
+                    <td className="px-3 py-1.5">{r.etapa.replaceAll('_', ' ')}</td>
+                    <td className="px-3 py-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <div className="flex-1 h-1.5 rounded-full bg-bg-3 overflow-hidden">
+                          <div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, Number(r.percentual_fisico))}%` }} />
+                        </div>
+                        <span className="w-8 text-right text-text-dim">{Number(r.percentual_fisico).toFixed(0)}%</span>
+                      </div>
+                    </td>
+                    <td className="px-3 py-1.5 text-right">{Number(r.custo_orcado) > 0 ? fmtBRL(Number(r.custo_orcado)) : '—'}</td>
+                    <td className="px-3 py-1.5 text-right">{Number(r.custo_comprometido) > 0 ? fmtBRL(Number(r.custo_comprometido)) : '—'}</td>
+                    <td className="px-3 py-1.5">
+                      <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${
+                        r.status === 'CONCLUIDA' ? 'bg-success/20 text-success' :
+                        r.status === 'EM_ANDAMENTO' ? 'bg-info/20 text-info' :
+                        r.status === 'ATRASADA' ? 'bg-danger/20 text-danger' :
+                        r.status === 'PAUSADA' ? 'bg-warn/20 text-warn' :
+                        'bg-bg-3 text-text-dim'
+                      }`}>
+                        {r.status.replaceAll('_', ' ')}
+                      </span>
+                    </td>
+                    <td className="px-3 py-1.5">{fmtDate(r.data_fim_prevista)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
