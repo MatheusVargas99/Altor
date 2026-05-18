@@ -60,7 +60,7 @@ export default async function RelatoriosPage({
 
   const cronoQuery = obraId
     ? supabase
-        .from('cronograma')
+        .from('v_cronograma_obra')
         .select('etapa, marco, descricao, ordem, peso, percentual_fisico, status, custo_orcado, custo_comprometido, custo_pago, data_inicio_prevista, data_fim_prevista')
         .eq('empreendimento_id', obraId)
         .order('ordem')
