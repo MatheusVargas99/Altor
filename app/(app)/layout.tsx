@@ -6,6 +6,7 @@ import { ToasterProvider } from '@/components/ui/Toaster';
 
 const nav = [
   { href: '/dashboard', label: 'Dashboard' },
+  { href: '/agenda', label: 'Agenda' },
   { href: '/empreendimentos', label: 'Empreendimentos' },
   { href: '/empresas', label: 'Empresas' },
   { href: '/clientes', label: 'Clientes' },

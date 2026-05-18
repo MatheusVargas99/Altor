@@ -7,7 +7,7 @@ import { Modal } from '@/components/ui/Modal';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { useToast } from '@/components/ui/Toaster';
 import { ContratoForm } from './ContratoForm';
-import { deleteContrato } from '@/lib/actions/contratos';
+import { deleteContrato, updateContratoStatus } from '@/lib/actions/contratos';
 import { fmtBRL, fmtDate } from '@/lib/utils';
 import type {
   Cliente,
@@ -47,6 +47,8 @@ export function ContratosClient({
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Contrato | null>(null);
   const [filterStatus, setFilterStatus] = useState<ContratoStatus | 'TODOS'>('TODOS');
+  const [statusModal, setStatusModal] = useState<Contrato | null>(null);
+  const [newStatus, setNewStatus] = useState<ContratoStatus>('EM_ELABORACAO');
 
   const empreendNomes = useMemo(
     () => Object.fromEntries(empreendimentos.map((e) => [e.id, e.nome])),
@@ -108,6 +110,17 @@ export function ContratosClient({
     },
   ];
 
+  const onStatusSave = () => {
+    if (!statusModal) return;
+    startTransition(async () => {
+      const res = await updateContratoStatus(statusModal.id, newStatus);
+      if (!res.ok) return toast({ kind: 'error', text: res.error });
+      toast({ kind: 'success', text: 'Status atualizado.' });
+      setStatusModal(null);
+      router.refresh();
+    });
+  };
+
   const onDelete = (r: Contrato) => {
     if (!confirm(`Excluir contrato "${r.numero}"?`)) return;
     startTransition(async () => {
@@ -166,6 +179,15 @@ export function ContratosClient({
             cell: (r) => (
               <div className="flex justify-end gap-2 text-xs">
                 <button
+                  className="text-warn hover:underline"
+                  onClick={() => {
+                    setNewStatus(r.status);
+                    setStatusModal(r);
+                  }}
+                >
+                  Status
+                </button>
+                <button
                   className="text-info hover:underline"
                   onClick={() => {
                     setEditing(r);
@@ -189,6 +211,52 @@ export function ContratosClient({
         emptyText="Nenhum contrato."
         searchPlaceholder="Buscar por nº, parte…"
       />
+
+      <Modal
+        open={!!statusModal}
+        onClose={() => setStatusModal(null)}
+        title="Alterar status do contrato"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <div>
+            <div className="text-sm text-text-dim mb-1">
+              Contrato: <strong className="text-text">{statusModal?.numero}</strong>
+            </div>
+          </div>
+          <div>
+            <label className="label">Novo status</label>
+            <select
+              className="input"
+              value={newStatus}
+              onChange={(e) => setNewStatus(e.target.value as ContratoStatus)}
+            >
+              <option value="EM_ELABORACAO">Em elaboração</option>
+              <option value="ATIVO">Ativo</option>
+              <option value="DISTRATADO">Distratado</option>
+              <option value="ENCERRADO">Encerrado</option>
+              <option value="INADIMPLENTE">Inadimplente</option>
+            </select>
+          </div>
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              className="btn-ghost"
+              onClick={() => setStatusModal(null)}
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              className="btn-primary"
+              disabled={isPending}
+              onClick={onStatusSave}
+            >
+              Salvar
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       <Modal
         open={open}

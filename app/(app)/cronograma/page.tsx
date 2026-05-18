@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { fmtBRL, fmtDate } from '@/lib/utils';
+import { fmtBRL } from '@/lib/utils';
+import { CronogramaClient } from './CronogramaClient';
 import type { Empreendimento } from '@/types/db';
 
 export const dynamic = 'force-dynamic';
@@ -22,17 +23,6 @@ type Row = {
   peso: number;
   status: string;
 };
-
-const statusColor = (s: string) =>
-  s === 'CONCLUIDA'
-    ? 'bg-success/20 text-success'
-    : s === 'EM_ANDAMENTO'
-      ? 'bg-info/20 text-info'
-      : s === 'ATRASADA'
-        ? 'bg-danger/20 text-danger'
-        : s === 'PAUSADA'
-          ? 'bg-warn/20 text-warn'
-          : 'bg-bg-3 text-text-dim';
 
 export default async function CronogramaPage({
   searchParams,
@@ -131,73 +121,7 @@ export default async function CronogramaPage({
             </div>
           </div>
 
-          <div className="overflow-x-auto rounded-lg border border-border">
-            <table className="w-full text-sm">
-              <thead className="bg-bg-3 text-text-dim">
-                <tr>
-                  <th className="px-3 py-2 text-left">Etapa</th>
-                  <th className="px-3 py-2 text-left">Marco</th>
-                  <th className="px-3 py-2 text-right">Peso</th>
-                  <th className="px-3 py-2 text-right">% Físico</th>
-                  <th className="px-3 py-2 text-left">Início prev.</th>
-                  <th className="px-3 py-2 text-left">Fim prev.</th>
-                  <th className="px-3 py-2 text-right">Orçado</th>
-                  <th className="px-3 py-2 text-right">Compromet.</th>
-                  <th className="px-3 py-2 text-right">Pago</th>
-                  <th className="px-3 py-2 text-right">% Gasto</th>
-                  <th className="px-3 py-2 text-left">Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((r) => {
-                  const orcado = Number(r.custo_orcado) || 0;
-                  const pago = Number(r.custo_pago) || 0;
-                  const pct = orcado > 0 ? (pago / orcado) * 100 : 0;
-                  const pctColor =
-                    pct > 100
-                      ? 'text-danger'
-                      : pct >= 90
-                        ? 'text-warn'
-                        : 'text-success';
-                  return (
-                    <tr key={r.id} className="border-t border-border">
-                      <td className="px-3 py-2 text-xs">
-                        {r.etapa.replaceAll('_', ' ')}
-                      </td>
-                      <td className="px-3 py-2">{r.marco}</td>
-                      <td className="px-3 py-2 text-right">
-                        {(Number(r.peso) * 100).toFixed(1)}%
-                      </td>
-                      <td className="px-3 py-2 text-right">
-                        {Number(r.percentual_fisico).toFixed(0)}%
-                      </td>
-                      <td className="px-3 py-2 text-xs">
-                        {fmtDate(r.data_inicio_prevista) || '—'}
-                      </td>
-                      <td className="px-3 py-2 text-xs">
-                        {fmtDate(r.data_fim_prevista) || '—'}
-                      </td>
-                      <td className="px-3 py-2 text-right">{fmtBRL(orcado)}</td>
-                      <td className="px-3 py-2 text-right">
-                        {fmtBRL(Number(r.custo_comprometido) || 0)}
-                      </td>
-                      <td className="px-3 py-2 text-right">{fmtBRL(pago)}</td>
-                      <td className={`px-3 py-2 text-right ${pctColor}`}>
-                        {orcado > 0 ? pct.toFixed(0) + '%' : '—'}
-                      </td>
-                      <td className="px-3 py-2">
-                        <span
-                          className={`rounded px-2 py-0.5 text-xs ${statusColor(r.status)}`}
-                        >
-                          {r.status.replaceAll('_', ' ')}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <CronogramaClient rows={rows} empreendimentoId={obraId} />
         </>
       )}
     </div>

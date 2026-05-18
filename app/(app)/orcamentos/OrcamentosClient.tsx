@@ -3,7 +3,6 @@
 import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Modal } from '@/components/ui/Modal';
-import { PageHeader } from '@/components/ui/PageHeader';
 import { useToast } from '@/components/ui/Toaster';
 import { OrcamentoForm } from './OrcamentoForm';
 import {
@@ -18,6 +17,16 @@ import {
   type Orcamento,
   type OrcamentoStatus,
 } from '@/types/db';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 
 const statusColor = (s: string) =>
   s === 'VENCEDOR'
@@ -35,19 +44,26 @@ export function OrcamentosClient({
   empreendimentos,
   empresas,
   loadError,
+  initialObraFilter = '',
 }: {
   initial: Orcamento[];
   empreendimentos: Pick<Empreendimento, 'id' | 'nome' | 'codigo_curto'>[];
   empresas: Pick<Empresa, 'id' | 'razao_social' | 'nome_fantasia'>[];
   loadError: string | null;
+  initialObraFilter?: string;
 }) {
+  const CHART_COLORS = [
+    '#C9A961', '#3B82F6', '#10B981', '#F59E0B', '#EF4444',
+    '#8B5CF6', '#06B6D4', '#F472B6', '#84CC16', '#94A3B8',
+  ];
+
   const router = useRouter();
   const toast = useToast();
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Orcamento | null>(null);
 
-  const [filterObra, setFilterObra] = useState('');
+  const [filterObra, setFilterObra] = useState(initialObraFilter);
   const [filterEtapa, setFilterEtapa] = useState('');
   const [filterStatus, setFilterStatus] = useState<OrcamentoStatus | 'TODOS'>('TODOS');
   const [filterGrupo, setFilterGrupo] = useState('');
@@ -110,21 +126,17 @@ export function OrcamentosClient({
 
   return (
     <>
-      <PageHeader
-        title="Orçamentos / Cotações"
-        description="Compare propostas por etapa e grupo. Marcar vencedor gera Compra."
-        actions={
-          <button
-            className="btn-primary"
-            onClick={() => {
-              setEditing(null);
-              setOpen(true);
-            }}
-          >
-            + Novo orçamento
-          </button>
-        }
-      />
+      <div className="flex justify-end mb-2">
+        <button
+          className="btn-primary"
+          onClick={() => {
+            setEditing(null);
+            setOpen(true);
+          }}
+        >
+          + Novo orçamento
+        </button>
+      </div>
       {loadError && (
         <div className="mb-4 rounded border border-danger bg-danger/10 px-3 py-2 text-sm text-danger">
           {loadError}
@@ -286,6 +298,85 @@ export function OrcamentosClient({
                   </tbody>
                 </table>
               </div>
+              {/* Comparative chart - only show when 2+ proposals exist */}
+              {g.items.length >= 1 && (
+                <div className="mt-3 pt-3 border-t border-border">
+                  <div className="text-xs text-text-dim mb-2">Comparativo de preços por fornecedor</div>
+                  <div style={{ width: '100%', height: 220 }}>
+                    <ResponsiveContainer>
+                      <BarChart
+                        data={g.items.map((o, idx) => ({
+                          empresa: o.empresa_id ? (empresaNomes[o.empresa_id] ?? '—') : '—',
+                          total: Number(o.valor_total),
+                          idx,
+                        }))}
+                        margin={{ top: 5, right: 10, left: 10, bottom: 40 }}
+                      >
+                        <CartesianGrid stroke="#334155" strokeDasharray="3 3" />
+                        <XAxis
+                          dataKey="empresa"
+                          stroke="#94A3B8"
+                          tick={{ fontSize: 11, fill: '#94A3B8' }}
+                          angle={-25}
+                          textAnchor="end"
+                          interval={0}
+                        />
+                        <YAxis
+                          stroke="#94A3B8"
+                          tick={{ fontSize: 11, fill: '#94A3B8' }}
+                          tickFormatter={(v: number) =>
+                            v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)
+                          }
+                        />
+                        <Tooltip
+                          formatter={(v) =>
+                            new Intl.NumberFormat('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL',
+                            }).format(Number(v ?? 0))
+                          }
+                          contentStyle={{
+                            background: '#1E293B',
+                            border: '1px solid #334155',
+                            color: '#F1F5F9',
+                            fontSize: 12,
+                          }}
+                        />
+                        <Bar dataKey="total" radius={[4, 4, 0, 0]}>
+                          {g.items.map((o, idx) => (
+                            <Cell
+                              key={o.id}
+                              fill={
+                                o.status === 'VENCEDOR'
+                                  ? '#10B981'
+                                  : o.status === 'PERDEDOR'
+                                    ? '#475569'
+                                    : CHART_COLORS[idx % CHART_COLORS.length]
+                              }
+                            />
+                          ))}
+                        </Bar>
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                  {g.items.length > 1 && (() => {
+                    const sorted = [...g.items].sort((a, b) => Number(a.valor_total) - Number(b.valor_total));
+                    const min = sorted[0];
+                    const max = sorted[sorted.length - 1];
+                    const diff = Number(max.valor_total) - Number(min.valor_total);
+                    const pct = Number(min.valor_total) > 0 ? (diff / Number(min.valor_total)) * 100 : 0;
+                    return (
+                      <div className="text-xs text-text-dim mt-1">
+                        Menor: <strong className="text-success">
+                          {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(min.valor_total))}
+                        </strong>
+                        {' '}({min.empresa_id ? (empresaNomes[min.empresa_id] ?? '—') : '—'})
+                        {' · '}Diferença para maior: <strong className="text-warn">{pct.toFixed(1)}%</strong>
+                      </div>
+                    );
+                  })()}
+                </div>
+              )}
             </section>
           );
         })}

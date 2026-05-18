@@ -1,0 +1,291 @@
+'use client';
+
+import { useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
+import { Modal } from '@/components/ui/Modal';
+import { useToast } from '@/components/ui/Toaster';
+import { inicializarEAP, updateCronogramaEtapa } from '@/lib/actions/cronograma';
+import { fmtBRL, fmtDate } from '@/lib/utils';
+import type { CronogramaStatus } from '@/types/db';
+
+type Row = {
+  id: string;
+  etapa: string;
+  marco: string;
+  descricao: string | null;
+  ordem: number;
+  data_inicio_prevista: string | null;
+  data_fim_prevista: string | null;
+  custo_orcado: number;
+  custo_comprometido: number;
+  custo_pago: number;
+  percentual_fisico: number;
+  peso: number;
+  status: string;
+};
+
+const statusColor = (s: string) =>
+  s === 'CONCLUIDA'
+    ? 'bg-success/20 text-success'
+    : s === 'EM_ANDAMENTO'
+      ? 'bg-info/20 text-info'
+      : s === 'ATRASADA'
+        ? 'bg-danger/20 text-danger'
+        : s === 'PAUSADA'
+          ? 'bg-warn/20 text-warn'
+          : 'bg-bg-3 text-text-dim';
+
+export function CronogramaClient({ rows, empreendimentoId }: { rows: Row[]; empreendimentoId: string | null }) {
+  const router = useRouter();
+  const toast = useToast();
+  const [isPending, startTransition] = useTransition();
+  const [editing, setEditing] = useState<Row | null>(null);
+  const [form, setForm] = useState({
+    custo_orcado: 0,
+    percentual_fisico: 0,
+    status: 'NAO_INICIADA' as CronogramaStatus,
+    data_inicio_prevista: '',
+    data_fim_prevista: '',
+  });
+
+  const openEdit = (r: Row) => {
+    setEditing(r);
+    setForm({
+      custo_orcado: Number(r.custo_orcado) || 0,
+      percentual_fisico: Number(r.percentual_fisico) || 0,
+      status: r.status as CronogramaStatus,
+      data_inicio_prevista: r.data_inicio_prevista ?? '',
+      data_fim_prevista: r.data_fim_prevista ?? '',
+    });
+  };
+
+  const onInicializar = () => {
+    if (!empreendimentoId) return;
+    startTransition(async () => {
+      const res = await inicializarEAP(empreendimentoId);
+      if (!res.ok) return toast({ kind: 'error', text: res.error });
+      toast({ kind: 'success', text: 'EAP inicializada com 14 etapas.' });
+      router.refresh();
+    });
+  };
+
+  const onSave = () => {
+    if (!editing) return;
+    startTransition(async () => {
+      const res = await updateCronogramaEtapa(editing.id, {
+        custo_orcado: form.custo_orcado,
+        percentual_fisico: form.percentual_fisico,
+        status: form.status,
+        data_inicio_prevista: form.data_inicio_prevista || null,
+        data_fim_prevista: form.data_fim_prevista || null,
+      });
+      if (!res.ok) return toast({ kind: 'error', text: res.error });
+      toast({ kind: 'success', text: 'Etapa atualizada.' });
+      setEditing(null);
+      router.refresh();
+    });
+  };
+
+  return (
+    <>
+      <div className="overflow-x-auto rounded-lg border border-border">
+        <table className="w-full text-sm">
+          <thead className="bg-bg-3 text-text-dim">
+            <tr>
+              <th className="px-3 py-2 text-left">Etapa</th>
+              <th className="px-3 py-2 text-left">Marco</th>
+              <th className="px-3 py-2 text-right">Peso</th>
+              <th className="px-3 py-2 text-right">% Físico</th>
+              <th className="px-3 py-2 text-left">Início prev.</th>
+              <th className="px-3 py-2 text-left">Fim prev.</th>
+              <th className="px-3 py-2 text-right">Orçado</th>
+              <th className="px-3 py-2 text-right">Compromet.</th>
+              <th className="px-3 py-2 text-right">Pago</th>
+              <th className="px-3 py-2 text-right">% Gasto</th>
+              <th className="px-3 py-2 text-right">Saldo</th>
+              <th className="px-3 py-2 text-left">Status</th>
+              <th className="px-3 py-2 text-right"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r) => {
+              const orcado = Number(r.custo_orcado) || 0;
+              const comprometido = Number(r.custo_comprometido) || 0;
+              const pago = Number(r.custo_pago) || 0;
+              const pct = orcado > 0 ? (comprometido / orcado) * 100 : 0;
+              const saldo = orcado - comprometido;
+              const pctColor =
+                pct > 100
+                  ? 'text-danger font-bold'
+                  : pct >= 90
+                    ? 'text-warn'
+                    : 'text-success';
+              return (
+                <tr key={r.id} className="border-t border-border hover:bg-bg-3/30">
+                  <td className="px-3 py-2 text-xs">
+                    {r.etapa.replaceAll('_', ' ')}
+                  </td>
+                  <td className="px-3 py-2">{r.marco}</td>
+                  <td className="px-3 py-2 text-right">
+                    {(Number(r.peso) * 100).toFixed(1)}%
+                  </td>
+                  <td className="px-3 py-2 text-right">
+                    {Number(r.percentual_fisico).toFixed(0)}%
+                  </td>
+                  <td className="px-3 py-2 text-xs">
+                    {fmtDate(r.data_inicio_prevista) || '—'}
+                  </td>
+                  <td className="px-3 py-2 text-xs">
+                    {fmtDate(r.data_fim_prevista) || '—'}
+                  </td>
+                  <td className="px-3 py-2 text-right">{fmtBRL(orcado)}</td>
+                  <td className="px-3 py-2 text-right">
+                    {fmtBRL(comprometido)}
+                  </td>
+                  <td className="px-3 py-2 text-right">{fmtBRL(pago)}</td>
+                  <td className={`px-3 py-2 text-right ${pctColor}`}>
+                    {orcado > 0 ? (pct > 100 ? '+' : '') + pct.toFixed(0) + '%' : '—'}
+                  </td>
+                  <td className={`px-3 py-2 text-right ${saldo < 0 ? 'text-danger' : 'text-text-dim'}`}>
+                    {orcado > 0 ? fmtBRL(saldo) : '—'}
+                  </td>
+                  <td className="px-3 py-2">
+                    <span
+                      className={`rounded px-2 py-0.5 text-xs ${statusColor(r.status)}`}
+                    >
+                      {r.status.replaceAll('_', ' ')}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2 text-right">
+                    <button
+                      className="text-xs text-info hover:underline"
+                      onClick={() => openEdit(r)}
+                    >
+                      Editar
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
+            {rows.length === 0 && (
+              <tr>
+                <td colSpan={13} className="px-3 py-8 text-center text-sm">
+                  {empreendimentoId ? (
+                    <div className="space-y-2">
+                      <div className="text-text-dim">Nenhuma etapa encontrada para este empreendimento.</div>
+                      <button
+                        className="btn-primary text-xs"
+                        disabled={isPending}
+                        onClick={onInicializar}
+                      >
+                        Inicializar EAP padrão (14 etapas)
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="text-text-dim">Selecione um empreendimento.</span>
+                  )}
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      <Modal
+        open={!!editing}
+        onClose={() => setEditing(null)}
+        title={`Editar etapa: ${editing?.etapa?.replaceAll('_', ' ')}`}
+        size="md"
+      >
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="label">Valor orçado (R$)</label>
+              <input
+                type="number"
+                step="0.01"
+                className="input"
+                value={form.custo_orcado}
+                onChange={(e) => setForm((f) => ({ ...f, custo_orcado: Number(e.target.value) }))}
+              />
+              <div className="text-xs text-text-dim mt-1">
+                Valor planejado/orçado para esta etapa
+              </div>
+            </div>
+            <div>
+              <label className="label">% Físico executado</label>
+              <input
+                type="number"
+                step="1"
+                min="0"
+                max="100"
+                className="input"
+                value={form.percentual_fisico}
+                onChange={(e) => setForm((f) => ({ ...f, percentual_fisico: Number(e.target.value) }))}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="label">Início previsto</label>
+              <input
+                type="date"
+                className="input"
+                value={form.data_inicio_prevista}
+                onChange={(e) => setForm((f) => ({ ...f, data_inicio_prevista: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="label">Fim previsto</label>
+              <input
+                type="date"
+                className="input"
+                value={form.data_fim_prevista}
+                onChange={(e) => setForm((f) => ({ ...f, data_fim_prevista: e.target.value }))}
+              />
+            </div>
+          </div>
+          <div>
+            <label className="label">Status</label>
+            <select
+              className="input"
+              value={form.status}
+              onChange={(e) => setForm((f) => ({ ...f, status: e.target.value as CronogramaStatus }))}
+            >
+              <option value="NAO_INICIADA">Não iniciada</option>
+              <option value="EM_ANDAMENTO">Em andamento</option>
+              <option value="CONCLUIDA">Concluída</option>
+              <option value="ATRASADA">Atrasada</option>
+              <option value="PAUSADA">Pausada</option>
+            </select>
+          </div>
+          {editing && (
+            <div className="rounded border border-border bg-bg-3 p-3 text-xs text-text-dim space-y-1">
+              <div>Orçamentos aprovados (comprometido): <strong className="text-text">{fmtBRL(Number(editing.custo_comprometido))}</strong></div>
+              <div>Pago até agora: <strong className="text-text">{fmtBRL(Number(editing.custo_pago))}</strong></div>
+              {Number(editing.custo_orcado) > 0 && (
+                <div className={Number(editing.custo_comprometido) > Number(editing.custo_orcado) ? 'text-danger' : 'text-success'}>
+                  Saldo disponível: {fmtBRL(Number(editing.custo_orcado) - Number(editing.custo_comprometido))}
+                  {Number(editing.custo_comprometido) > Number(editing.custo_orcado) && ' ⚠ ORÇAMENTO ESTOURADO'}
+                </div>
+              )}
+            </div>
+          )}
+          <div className="flex justify-end gap-2">
+            <button type="button" className="btn-ghost" onClick={() => setEditing(null)}>
+              Cancelar
+            </button>
+            <button
+              type="button"
+              className="btn-primary"
+              disabled={isPending}
+              onClick={onSave}
+            >
+              Salvar
+            </button>
+          </div>
+        </div>
+      </Modal>
+    </>
+  );
+}
