@@ -39,41 +39,51 @@ const cr_status = z.enum([
 ] as const);
 const cp_status = cr_status;
 
-export const contaReceberSchema = z.object({
-  empreendimento_id: optUuid,
-  cliente_id: optUuid,
-  descricao: z.string().min(2, 'Descrição obrigatória').max(300),
-  categoria: z.enum(CR_CATEGORIAS as [string, ...string[]]).nullable().optional(),
-  numero_parcela: optStr,
-  valor_original: reqNum,
-  valor_pago: optNum.transform((v) => v ?? 0),
-  data_emissao: optStr,
-  data_vencimento: z.string().min(8, 'Vencimento obrigatório'),
-  data_pagamento: optStr,
-  forma_recebimento: z.enum(CR_FORMAS as [string, ...string[]]).nullable().optional(),
-  status: cr_status.default('ABERTO'),
-  juros_multa: optNum.transform((v) => v ?? 0),
-  observacoes: optStr,
-});
+export const contaReceberSchema = z
+  .object({
+    empreendimento_id: optUuid,
+    cliente_id: optUuid,
+    descricao: z.string().min(2, 'Descrição obrigatória').max(300),
+    categoria: z.enum(CR_CATEGORIAS as [string, ...string[]]).nullable().optional(),
+    numero_parcela: optStr,
+    valor_original: reqNum,
+    valor_pago: optNum.transform((v) => v ?? 0),
+    data_emissao: optStr,
+    data_vencimento: z.string().min(8, 'Vencimento obrigatório'),
+    data_pagamento: optStr,
+    forma_recebimento: z.enum(CR_FORMAS as [string, ...string[]]).nullable().optional(),
+    status: cr_status.default('ABERTO'),
+    juros_multa: optNum.transform((v) => v ?? 0),
+    observacoes: optStr,
+  })
+  .refine((d) => (d.valor_pago ?? 0) <= d.valor_original, {
+    message: 'Valor pago não pode ser maior que o valor original',
+    path: ['valor_pago'],
+  });
 
-export const contaPagarSchema = z.object({
-  empreendimento_id: optUuid,
-  empresa_id: optUuid,
-  descricao: z.string().min(2, 'Descrição obrigatória').max(300),
-  categoria: z.enum(CP_CATEGORIAS as [string, ...string[]]).nullable().optional(),
-  etapa_eap: z.enum(ETAPAS_EAP as [string, ...string[]]).nullable().optional(),
-  numero_documento: optStr,
-  valor_original: reqNum,
-  valor_pago: optNum.transform((v) => v ?? 0),
-  data_emissao: optStr,
-  data_vencimento: z.string().min(8, 'Vencimento obrigatório'),
-  data_pagamento: optStr,
-  forma_pagamento: z.enum(CP_FORMAS as [string, ...string[]]).nullable().optional(),
-  status: cp_status.default('ABERTO'),
-  linha_digitavel: optStr,
-  anexo_url: optStr,
-  observacoes: optStr,
-});
+export const contaPagarSchema = z
+  .object({
+    empreendimento_id: optUuid,
+    empresa_id: optUuid,
+    descricao: z.string().min(2, 'Descrição obrigatória').max(300),
+    categoria: z.enum(CP_CATEGORIAS as [string, ...string[]]).nullable().optional(),
+    etapa_eap: z.enum(ETAPAS_EAP as [string, ...string[]]).nullable().optional(),
+    numero_documento: optStr,
+    valor_original: reqNum,
+    valor_pago: optNum.transform((v) => v ?? 0),
+    data_emissao: optStr,
+    data_vencimento: z.string().min(8, 'Vencimento obrigatório'),
+    data_pagamento: optStr,
+    forma_pagamento: z.enum(CP_FORMAS as [string, ...string[]]).nullable().optional(),
+    status: cp_status.default('ABERTO'),
+    linha_digitavel: optStr,
+    anexo_url: optStr,
+    observacoes: optStr,
+  })
+  .refine((d) => (d.valor_pago ?? 0) <= d.valor_original, {
+    message: 'Valor pago não pode ser maior que o valor original',
+    path: ['valor_pago'],
+  });
 
 export const parcelamentoSchema = z.object({
   qtd_parcelas: z.coerce.number().int().min(2).max(240),
