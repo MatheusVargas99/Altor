@@ -1,6 +1,6 @@
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
+import { requireUser } from '@/lib/supabase/auth';
 import { revalidateFinanceiro } from './_revalidate';
 import {
   comissaoSchema,
@@ -11,15 +11,6 @@ import {
 import { gerarParcelas, type Periodicidade } from '@/lib/parcelamento';
 
 type Result<T = void> = { ok: true; data?: T } | { ok: false; error: string };
-
-async function requireUser() {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error('Não autenticado');
-  return { supabase, user };
-}
 
 function aplicarAutoFillPaga(input: ComissaoInput): ComissaoInput {
   if (input.status === 'PAGA' && !input.data_paga) {

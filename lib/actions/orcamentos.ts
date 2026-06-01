@@ -1,19 +1,10 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createClient } from '@/lib/supabase/server';
+import { requireUser } from '@/lib/supabase/auth';
 import { orcamentoSchema, type OrcamentoInput } from '@/lib/schemas/orcamento';
 
 type Result<T = void> = { ok: true; data?: T } | { ok: false; error: string };
-
-async function requireUser() {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error('Não autenticado');
-  return { supabase, user };
-}
 
 export async function createOrcamento(
   input: OrcamentoInput,

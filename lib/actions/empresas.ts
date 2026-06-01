@@ -1,19 +1,10 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createClient } from '@/lib/supabase/server';
+import { requireUser } from '@/lib/supabase/auth';
 import { empresaSchema, type EmpresaInput } from '@/lib/schemas/empresa';
 
 type Result<T = void> = { ok: true; data?: T } | { ok: false; error: string };
-
-async function requireUser() {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error('Não autenticado');
-  return { supabase, user };
-}
 
 export async function createEmpresa(input: EmpresaInput): Promise<Result<{ id: string }>> {
   const parsed = empresaSchema.safeParse(input);

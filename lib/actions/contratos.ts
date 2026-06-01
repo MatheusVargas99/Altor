@@ -1,20 +1,11 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
-import { createClient } from '@/lib/supabase/server';
+import { requireUser } from '@/lib/supabase/auth';
 import { contratoSchema, type ContratoInput } from '@/lib/schemas/contrato';
 import type { ContratoStatus } from '@/types/db';
 
 type Result<T = void> = { ok: true; data?: T } | { ok: false; error: string };
-
-async function requireUser() {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error('Não autenticado');
-  return { supabase, user };
-}
 
 export async function createContrato(input: ContratoInput): Promise<Result<{ id: string }>> {
   const parsed = contratoSchema.safeParse(input);
