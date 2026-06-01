@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { DataTable, type Column } from '@/components/ui/DataTable';
 import { Modal } from '@/components/ui/Modal';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -16,6 +17,7 @@ export function ClientesClient({
   initial: Cliente[];
   loadError: string | null;
 }) {
+  const router = useRouter();
   const toast = useToast();
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
@@ -87,6 +89,7 @@ export function ClientesClient({
         return;
       }
       toast({ kind: 'success', text: 'Cliente excluído.' });
+      router.refresh();
     });
   };
 
@@ -161,6 +164,7 @@ export function ClientesClient({
           onDone={(msg) => {
             toast({ kind: 'success', text: msg });
             setOpen(false);
+            router.refresh();
           }}
           onError={(msg) => toast({ kind: 'error', text: msg })}
           onCancel={() => setOpen(false)}

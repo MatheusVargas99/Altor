@@ -10,8 +10,7 @@ export default async function MedicoesPage() {
     supabase
       .from('medicoes')
       .select('*')
-      .order('data_medicao', { ascending: false })
-      .limit(500),
+      .order('data_medicao', { ascending: false }),
     supabase.from('empreendimentos').select('id, nome, codigo_curto').order('nome'),
     supabase
       .from('empresas')

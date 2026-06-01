@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toaster';
 import {
@@ -114,6 +115,7 @@ export function AgendaClient({
     tipo: string | null;
   }[];
 }) {
+  const router = useRouter();
   const toast = useToast();
   const [isPending, startTransition] = useTransition();
   const [filterPeriodo, setFilterPeriodo] = useState<Periodo>('30D');
@@ -257,6 +259,7 @@ export function AgendaClient({
       if (!res.ok) return toast({ kind: 'error', text: (res as { ok: false; error: string }).error ?? 'Erro' });
       toast({ kind: 'success', text: 'Status atualizado.' });
       setStatusModal(null);
+      router.refresh();
     });
   };
 

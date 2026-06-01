@@ -24,8 +24,7 @@ export default async function OrcamentosPage({
         .order('empreendimento_id')
         .order('etapa')
         .order('grupo_cotacao')
-        .order('valor_total', { ascending: true })
-        .limit(1000),
+        .order('valor_total', { ascending: true }),
       supabase.from('empreendimentos').select('id, nome, codigo_curto').order('nome'),
       supabase.from('empresas').select('id, razao_social, nome_fantasia').order('razao_social'),
     ]);
