@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 
 export type Column<T> = {
   key: string;
@@ -10,6 +10,41 @@ export type Column<T> = {
   sortAccessor?: (row: T) => string | number | null;
   searchAccessor?: (row: T) => string;
 };
+
+function useDebounced<T>(value: T, delay = 150): T {
+  const [v, setV] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setV(value), delay);
+    return () => clearTimeout(t);
+  }, [value, delay]);
+  return v;
+}
+
+function TableRowInner<T extends { id: string }>({
+  row,
+  columns,
+  onRowClick,
+}: {
+  row: T;
+  columns: Column<T>[];
+  onRowClick?: (row: T) => void;
+}) {
+  return (
+    <tr
+      className={`border-t border-border ${
+        onRowClick ? 'cursor-pointer hover:bg-bg-3' : ''
+      }`}
+      onClick={onRowClick ? () => onRowClick(row) : undefined}
+    >
+      {columns.map((c) => (
+        <td key={c.key} className={`px-3 py-2 ${c.className ?? ''}`}>
+          {c.cell(row)}
+        </td>
+      ))}
+    </tr>
+  );
+}
+const TableRow = memo(TableRowInner) as typeof TableRowInner;
 
 export function DataTable<T extends { id: string }>({
   rows,
@@ -25,19 +60,32 @@ export function DataTable<T extends { id: string }>({
   searchPlaceholder?: string;
 }) {
   const [q, setQ] = useState('');
+  const dq = useDebounced(q, 150);
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('asc');
 
+  // Precompute a flat search string per row so each keystroke is O(N) string
+  // contains instead of O(N × columns) repeated function calls.
+  const searchIndex = useMemo(() => {
+    const idx = new Map<string, string>();
+    for (const r of rows) {
+      let acc = '';
+      for (const c of columns) {
+        if (c.searchAccessor) {
+          const v = c.searchAccessor(r);
+          if (v) acc += ' ' + v.toLowerCase();
+        }
+      }
+      idx.set(r.id, acc);
+    }
+    return idx;
+  }, [rows, columns]);
+
   const filtered = useMemo(() => {
-    const needle = q.trim().toLowerCase();
+    const needle = dq.trim().toLowerCase();
     if (!needle) return rows;
-    return rows.filter((r) =>
-      columns.some((c) => {
-        const v = c.searchAccessor ? c.searchAccessor(r) : '';
-        return v.toLowerCase().includes(needle);
-      }),
-    );
-  }, [rows, columns, q]);
+    return rows.filter((r) => (searchIndex.get(r.id) ?? '').includes(needle));
+  }, [rows, dq, searchIndex]);
 
   const sorted = useMemo(() => {
     if (!sortKey) return filtered;
@@ -104,19 +152,12 @@ export function DataTable<T extends { id: string }>({
               </tr>
             ) : (
               sorted.map((row) => (
-                <tr
+                <TableRow
                   key={row.id}
-                  className={`border-t border-border ${
-                    onRowClick ? 'cursor-pointer hover:bg-bg-3' : ''
-                  }`}
-                  onClick={onRowClick ? () => onRowClick(row) : undefined}
-                >
-                  {columns.map((c) => (
-                    <td key={c.key} className={`px-3 py-2 ${c.className ?? ''}`}>
-                      {c.cell(row)}
-                    </td>
-                  ))}
-                </tr>
+                  row={row}
+                  columns={columns}
+                  onRowClick={onRowClick}
+                />
               ))
             )}
           </tbody>
