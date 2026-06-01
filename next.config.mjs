@@ -26,6 +26,8 @@ const nextConfig = {
               "font-src 'self'",
               "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
               "frame-ancestors 'none'",
+              "form-action 'self'",
+              "base-uri 'self'",
             ].join('; '),
           },
         ],
