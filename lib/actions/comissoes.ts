@@ -1,7 +1,7 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+import { revalidateFinanceiro } from './_revalidate';
 import {
   comissaoSchema,
   parcelamentoComissaoSchema,
@@ -42,7 +42,7 @@ export async function createComissao(
     .select('id')
     .single();
   if (error) return { ok: false, error: error.message };
-  revalidatePath('/comissoes');
+  revalidateFinanceiro();
   return { ok: true, data: { id: data.id } };
 }
 
@@ -60,7 +60,7 @@ export async function updateComissao(
     .update({ ...final, atualizado_por: user.id })
     .eq('id', id);
   if (error) return { ok: false, error: error.message };
-  revalidatePath('/comissoes');
+  revalidateFinanceiro();
   return { ok: true };
 }
 
@@ -68,7 +68,7 @@ export async function deleteComissao(id: string): Promise<Result> {
   const { supabase } = await requireUser();
   const { error } = await supabase.from('comissoes').delete().eq('id', id);
   if (error) return { ok: false, error: error.message };
-  revalidatePath('/comissoes');
+  revalidateFinanceiro();
   return { ok: true };
 }
 
@@ -83,7 +83,7 @@ export async function marcarPagaComissao(id: string): Promise<Result> {
     })
     .eq('id', id);
   if (error) return { ok: false, error: error.message };
-  revalidatePath('/comissoes');
+  revalidateFinanceiro();
   return { ok: true };
 }
 
@@ -128,6 +128,6 @@ export async function criarComissoesParceladas(
     .from('comissoes')
     .insert(rows, { count: 'exact' });
   if (error) return { ok: false, error: error.message };
-  revalidatePath('/comissoes');
+  revalidateFinanceiro();
   return { ok: true, data: { count: count ?? rows.length } };
 }

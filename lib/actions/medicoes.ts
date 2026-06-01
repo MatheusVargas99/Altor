@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import { medicaoSchema, type MedicaoInput } from '@/lib/schemas/medicao';
+import { revalidateFinanceiro } from './_revalidate';
 
 type Result<T = void> = { ok: true; data?: T } | { ok: false; error: string };
 
@@ -104,6 +105,6 @@ export async function aprovarMedicao(
   if (error) return { ok: false, error: error.message };
 
   revalidatePath('/medicoes');
-  revalidatePath('/contas-pagar');
+  revalidateFinanceiro();
   return { ok: true, data: { conta_pagar_id } };
 }

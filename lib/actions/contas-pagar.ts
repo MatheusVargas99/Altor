@@ -1,6 +1,5 @@
 'use server';
 
-import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
 import {
   contaPagarSchema,
@@ -9,6 +8,7 @@ import {
   type ParcelamentoInput,
 } from '@/lib/schemas/contas';
 import { gerarParcelas, type Periodicidade } from '@/lib/parcelamento';
+import { revalidateFinanceiro } from './_revalidate';
 
 type Result<T = void> = { ok: true; data?: T } | { ok: false; error: string };
 
@@ -48,7 +48,7 @@ export async function createContaPagar(
     .select('id')
     .single();
   if (error) return { ok: false, error: error.message };
-  revalidatePath('/contas-pagar');
+  revalidateFinanceiro();
   return { ok: true, data: { id: data.id } };
 }
 
@@ -66,7 +66,7 @@ export async function updateContaPagar(
     .update({ ...final, atualizado_por: user.id })
     .eq('id', id);
   if (error) return { ok: false, error: error.message };
-  revalidatePath('/contas-pagar');
+  revalidateFinanceiro();
   return { ok: true };
 }
 
@@ -74,7 +74,7 @@ export async function deleteContaPagar(id: string): Promise<Result> {
   const { supabase } = await requireUser();
   const { error } = await supabase.from('contas_pagar').delete().eq('id', id);
   if (error) return { ok: false, error: error.message };
-  revalidatePath('/contas-pagar');
+  revalidateFinanceiro();
   return { ok: true };
 }
 
@@ -96,7 +96,7 @@ export async function marcarPagoContaPagar(id: string): Promise<Result> {
     })
     .eq('id', id);
   if (error) return { ok: false, error: error.message };
-  revalidatePath('/contas-pagar');
+  revalidateFinanceiro();
   return { ok: true };
 }
 
@@ -144,6 +144,6 @@ export async function criarContasPagarParceladas(
     .from('contas_pagar')
     .insert(rows, { count: 'exact' });
   if (error) return { ok: false, error: error.message };
-  revalidatePath('/contas-pagar');
+  revalidateFinanceiro();
   return { ok: true, data: { count: count ?? rows.length } };
 }
