@@ -11,7 +11,8 @@ export default async function CRPage() {
       supabase
         .from('contas_receber')
         .select('*')
-        .order('data_vencimento', { ascending: false }),
+        .order('data_vencimento', { ascending: false })
+        .limit(1000),
       supabase
         .from('empreendimentos')
         .select('id, nome, codigo_curto')

@@ -11,7 +11,8 @@ export default async function CPPage() {
       supabase
         .from('contas_pagar')
         .select('*')
-        .order('data_vencimento', { ascending: false }),
+        .order('data_vencimento', { ascending: false })
+        .limit(1000),
       supabase.from('empreendimentos').select('id, nome, codigo_curto').order('nome'),
       supabase.from('empresas').select('id, razao_social, nome_fantasia').order('razao_social'),
     ]);

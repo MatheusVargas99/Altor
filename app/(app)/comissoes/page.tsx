@@ -15,7 +15,8 @@ export default async function ComissoesPage() {
     supabase
       .from('comissoes')
       .select('*')
-      .order('data_prevista', { ascending: false }),
+      .order('data_prevista', { ascending: false })
+      .limit(1000),
     supabase.from('empreendimentos').select('id, nome').order('nome'),
     supabase.from('clientes').select('id, nome_completo').order('nome_completo'),
     supabase

@@ -9,7 +9,8 @@ export default async function ClientesPage() {
   const { data, error } = await supabase
     .from('clientes')
     .select('*')
-    .order('nome_completo');
+    .order('nome_completo')
+    .limit(2000);
 
   return (
     <div className="p-6">

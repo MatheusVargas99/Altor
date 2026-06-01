@@ -9,7 +9,8 @@ export default async function EmpreendimentosPage() {
   const { data, error } = await supabase
     .from('empreendimentos')
     .select('*')
-    .order('nome');
+    .order('nome')
+    .limit(1000);
 
   return (
     <div className="p-6">

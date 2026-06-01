@@ -9,7 +9,8 @@ export default async function EmpresasPage() {
   const { data, error } = await supabase
     .from('empresas')
     .select('*')
-    .order('razao_social');
+    .order('razao_social')
+    .limit(2000);
 
   return (
     <div className="p-6">
