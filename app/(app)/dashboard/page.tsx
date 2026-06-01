@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { fmtBRL } from '@/lib/utils';
-import { DashboardCharts } from './DashboardCharts';
+import { DashboardCharts } from './DashboardChartsLazy';
 import type { ContaPagar, ContaReceber, Empreendimento } from '@/types/db';
 
 export const dynamic = 'force-dynamic';
