@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
 import { DataTable, type Column } from '@/components/ui/DataTable';
 import { Modal } from '@/components/ui/Modal';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -46,7 +45,6 @@ export function ComprasClient({
   empresas: Pick<Empresa, 'id' | 'razao_social' | 'nome_fantasia'>[];
   loadError: string | null;
 }) {
-  const router = useRouter();
   const toast = useToast();
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
@@ -157,7 +155,6 @@ export function ComprasClient({
       const res = await deleteCompra(r.id);
       if (!res.ok) return toast({ kind: 'error', text: res.error });
       toast({ kind: 'success', text: 'Compra excluída.' });
-      router.refresh();
     });
   };
 
@@ -166,7 +163,6 @@ export function ComprasClient({
       const res = await avancarCompra(r.id, para);
       if (!res.ok) return toast({ kind: 'error', text: res.error });
       toast({ kind: 'success', text: `Status atualizado para ${para}.` });
-      router.refresh();
     });
   };
 
@@ -304,7 +300,6 @@ export function ComprasClient({
           onDone={(msg) => {
             toast({ kind: 'success', text: msg });
             setOpen(false);
-            router.refresh();
           }}
           onError={(msg) => toast({ kind: 'error', text: msg })}
           onCancel={() => setOpen(false)}

@@ -33,7 +33,8 @@ export default async function AgendaPage() {
       .gte('data_vencimento', inicio)
       .lte('data_vencimento', fim)
       .neq('status', 'CANCELADO')
-      .order('data_vencimento'),
+      .order('data_vencimento')
+      .limit(500),
     supabase
       .from('contas_pagar')
       .select(
@@ -42,7 +43,8 @@ export default async function AgendaPage() {
       .gte('data_vencimento', inicio)
       .lte('data_vencimento', fim)
       .neq('status', 'CANCELADO')
-      .order('data_vencimento'),
+      .order('data_vencimento')
+      .limit(500),
     supabase
       .from('comissoes')
       .select(
@@ -51,14 +53,16 @@ export default async function AgendaPage() {
       .gte('data_prevista', inicio)
       .lte('data_prevista', fim)
       .neq('status', 'CANCELADA')
-      .order('data_prevista'),
+      .order('data_prevista')
+      .limit(500),
     supabase
       .from('contratos')
       .select(
         'id, numero, parte_nome, valor_total, data_vigencia_fim, status, empreendimento_id, tipo',
       )
       .in('status', ['EM_ELABORACAO', 'ATIVO', 'INADIMPLENTE'])
-      .order('data_vigencia_fim'),
+      .order('data_vigencia_fim')
+      .limit(500),
   ]);
 
   const obras =

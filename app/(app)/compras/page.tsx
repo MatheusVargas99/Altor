@@ -10,7 +10,8 @@ export default async function ComprasPage() {
     supabase
       .from('compras')
       .select('*')
-      .order('data_aprovacao', { ascending: false }),
+      .order('data_aprovacao', { ascending: false })
+      .limit(500),
     supabase.from('empreendimentos').select('id, nome, codigo_curto').order('nome'),
     supabase
       .from('empresas')

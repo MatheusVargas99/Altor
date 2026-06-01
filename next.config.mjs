@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   experimental: {
-    staleTimes: { dynamic: 0, static: 0 },
+    optimizePackageImports: ['lucide-react', 'recharts'],
   },
   async headers() {
     return [

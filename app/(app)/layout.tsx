@@ -18,7 +18,7 @@ import {
   BarChart2,
   UserCog,
 } from 'lucide-react';
-import { createClient } from '@/lib/supabase/server';
+import { getCurrentUser } from '@/lib/supabase/auth';
 import { logout } from '@/app/login/actions';
 import { ToasterProvider } from '@/components/ui/Toaster';
 
@@ -40,18 +40,11 @@ const nav = [
 ];
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const supabase = createClient();
-  const { data: { user } } = await supabase.auth.getUser();
+  const user = await getCurrentUser();
   if (!user) redirect('/login');
 
-  const { data: profile } = await supabase
-    .from('profiles')
-    .select('nome, role')
-    .eq('id', user.id)
-    .single();
-
-  const isAdmin = profile?.role === 'ADMIN';
-  const displayName = profile?.nome ?? user.email ?? '';
+  const isAdmin = user.role === 'ADMIN';
+  const displayName = user.nome ?? user.email ?? '';
 
   return (
     <div className="flex min-h-screen">

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toaster';
 import {
@@ -24,7 +23,6 @@ type Profile = {
 const emptyForm = { nome: '', email: '', senha: '', confirma: '', role: 'OPERACIONAL' as UserRole };
 
 export function UsuariosClient({ profiles, currentUserId }: { profiles: Profile[]; currentUserId: string }) {
-  const router = useRouter();
   const toast = useToast();
   const [isPending, startTransition] = useTransition();
 
@@ -52,7 +50,6 @@ export function UsuariosClient({ profiles, currentUserId }: { profiles: Profile[
       toast({ kind: 'success', text: 'Usuário criado com sucesso.' });
       setCreateOpen(false);
       setForm(emptyForm);
-      router.refresh();
     });
   };
 
@@ -64,7 +61,6 @@ export function UsuariosClient({ profiles, currentUserId }: { profiles: Profile[
       if (!res.ok) return toast({ kind: 'error', text: res.error });
       toast({ kind: 'success', text: 'Usuário atualizado.' });
       setEditTarget(null);
-      router.refresh();
     });
   };
 
@@ -88,7 +84,6 @@ export function UsuariosClient({ profiles, currentUserId }: { profiles: Profile[
       const res = await excluirUsuario(p.id);
       if (!res.ok) return toast({ kind: 'error', text: res.error });
       toast({ kind: 'success', text: 'Usuário excluído.' });
-      router.refresh();
     });
   };
 

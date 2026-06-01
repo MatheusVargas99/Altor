@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toaster';
 import { inicializarEAP, updateCronogramaEtapa } from '@/lib/actions/cronograma';
@@ -46,7 +45,6 @@ export function CronogramaClient({
   rows: Row[];
   empreendimentoId: string | null;
 }) {
-  const router = useRouter();
   const toast = useToast();
   const [isPending, startTransition] = useTransition();
   const [savingId, setSavingId] = useState<string | null>(null);
@@ -75,7 +73,6 @@ export function CronogramaClient({
         setLocalStatus((p) => { const n = { ...p }; delete n[id]; return n; });
         setLocalPct((p)    => { const n = { ...p }; delete n[id]; return n; });
       } else {
-        router.refresh();
       }
     });
   };
@@ -111,7 +108,6 @@ export function CronogramaClient({
       if (!res.ok) return toast({ kind: 'error', text: res.error });
       toast({ kind: 'success', text: 'Etapa atualizada.' });
       setEditing(null);
-      router.refresh();
     });
   };
 
@@ -121,7 +117,6 @@ export function CronogramaClient({
       const res = await inicializarEAP(empreendimentoId);
       if (!res.ok) return toast({ kind: 'error', text: res.error });
       toast({ kind: 'success', text: 'EAP inicializada com 14 etapas.' });
-      router.refresh();
     });
   };
 

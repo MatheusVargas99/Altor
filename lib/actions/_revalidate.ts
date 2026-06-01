@@ -1,5 +1,10 @@
 import { revalidatePath } from 'next/cache';
 
 export function revalidateFinanceiro() {
-  revalidatePath('/', 'layout');
+  revalidatePath('/dashboard');
+  revalidatePath('/agenda');
+  revalidatePath('/contas-pagar');
+  revalidatePath('/contas-receber');
+  revalidatePath('/comissoes');
+  revalidatePath('/medicoes');
 }

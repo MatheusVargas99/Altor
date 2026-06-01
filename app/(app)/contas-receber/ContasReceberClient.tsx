@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
 import { DataTable, type Column } from '@/components/ui/DataTable';
 import { Modal } from '@/components/ui/Modal';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -25,7 +24,6 @@ export function ContasReceberClient({
   clientes: Pick<Cliente, 'id' | 'nome_completo'>[];
   loadError: string | null;
 }) {
-  const router = useRouter();
   const toast = useToast();
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
@@ -150,7 +148,6 @@ export function ContasReceberClient({
         return;
       }
       toast({ kind: 'success', text: 'Conta excluída.' });
-      router.refresh();
     });
   };
 
@@ -162,7 +159,6 @@ export function ContasReceberClient({
         return;
       }
       toast({ kind: 'success', text: 'Marcada como paga.' });
-      router.refresh();
     });
   };
 
@@ -292,7 +288,6 @@ export function ContasReceberClient({
           onDone={(msg) => {
             toast({ kind: 'success', text: msg });
             setOpen(false);
-            router.refresh();
           }}
           onError={(msg) => toast({ kind: 'error', text: msg })}
           onCancel={() => setOpen(false)}

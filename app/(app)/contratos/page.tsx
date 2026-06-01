@@ -11,7 +11,8 @@ export default async function ContratosPage() {
       supabase
         .from('contratos')
         .select('*')
-        .order('data_assinatura', { ascending: false }),
+        .order('data_assinatura', { ascending: false })
+        .limit(500),
       supabase.from('empreendimentos').select('id, nome, codigo_curto').order('nome'),
       supabase.from('clientes').select('id, nome_completo').order('nome_completo'),
       supabase

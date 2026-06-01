@@ -1,7 +1,6 @@
 'use client';
 
 import { useMemo, useState, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
 import { Modal } from '@/components/ui/Modal';
 import { useToast } from '@/components/ui/Toaster';
 import { OrcamentoForm } from './OrcamentoForm';
@@ -17,16 +16,7 @@ import {
   type Orcamento,
   type OrcamentoStatus,
 } from '@/types/db';
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Cell,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from 'recharts';
+import { OrcamentoComparativoChart } from './OrcamentoComparativoChartLazy';
 
 const statusColor = (s: string) =>
   s === 'VENCEDOR'
@@ -52,12 +42,6 @@ export function OrcamentosClient({
   loadError: string | null;
   initialObraFilter?: string;
 }) {
-  const CHART_COLORS = [
-    '#C9A961', '#3B82F6', '#10B981', '#F59E0B', '#EF4444',
-    '#8B5CF6', '#06B6D4', '#F472B6', '#84CC16', '#94A3B8',
-  ];
-
-  const router = useRouter();
   const toast = useToast();
   const [isPending, startTransition] = useTransition();
   const [open, setOpen] = useState(false);
@@ -110,7 +94,6 @@ export function OrcamentosClient({
       const res = await deleteOrcamento(r.id);
       if (!res.ok) return toast({ kind: 'error', text: res.error });
       toast({ kind: 'success', text: 'Orçamento excluído.' });
-      router.refresh();
     });
   };
 
@@ -120,7 +103,6 @@ export function OrcamentosClient({
       const res = await marcarVencedorOrcamento(r.id);
       if (!res.ok) return toast({ kind: 'error', text: res.error });
       toast({ kind: 'success', text: 'Vencedor marcado. Compra gerada.' });
-      router.refresh();
     });
   };
 
@@ -302,63 +284,7 @@ export function OrcamentosClient({
               {g.items.length >= 1 && (
                 <div className="mt-3 pt-3 border-t border-border">
                   <div className="text-xs text-text-dim mb-2">Comparativo de preços por fornecedor</div>
-                  <div style={{ width: '100%', height: 220 }}>
-                    <ResponsiveContainer>
-                      <BarChart
-                        data={g.items.map((o, idx) => ({
-                          empresa: o.empresa_id ? (empresaNomes[o.empresa_id] ?? '—') : '—',
-                          total: Number(o.valor_total),
-                          idx,
-                        }))}
-                        margin={{ top: 5, right: 10, left: 10, bottom: 40 }}
-                      >
-                        <CartesianGrid stroke="#334155" strokeDasharray="3 3" />
-                        <XAxis
-                          dataKey="empresa"
-                          stroke="#94A3B8"
-                          tick={{ fontSize: 11, fill: '#94A3B8' }}
-                          angle={-25}
-                          textAnchor="end"
-                          interval={0}
-                        />
-                        <YAxis
-                          stroke="#94A3B8"
-                          tick={{ fontSize: 11, fill: '#94A3B8' }}
-                          tickFormatter={(v: number) =>
-                            v >= 1000 ? `${(v / 1000).toFixed(0)}k` : String(v)
-                          }
-                        />
-                        <Tooltip
-                          formatter={(v) =>
-                            new Intl.NumberFormat('pt-BR', {
-                              style: 'currency',
-                              currency: 'BRL',
-                            }).format(Number(v ?? 0))
-                          }
-                          contentStyle={{
-                            background: '#1E293B',
-                            border: '1px solid #334155',
-                            color: '#F1F5F9',
-                            fontSize: 12,
-                          }}
-                        />
-                        <Bar dataKey="total" radius={[4, 4, 0, 0]}>
-                          {g.items.map((o, idx) => (
-                            <Cell
-                              key={o.id}
-                              fill={
-                                o.status === 'VENCEDOR'
-                                  ? '#10B981'
-                                  : o.status === 'PERDEDOR'
-                                    ? '#475569'
-                                    : CHART_COLORS[idx % CHART_COLORS.length]
-                              }
-                            />
-                          ))}
-                        </Bar>
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </div>
+                  <OrcamentoComparativoChart items={g.items} empresaNomes={empresaNomes} />
                   {g.items.length > 1 && (() => {
                     const sorted = [...g.items].sort((a, b) => Number(a.valor_total) - Number(b.valor_total));
                     const min = sorted[0];
@@ -395,7 +321,6 @@ export function OrcamentosClient({
           onDone={(msg) => {
             toast({ kind: 'success', text: msg });
             setOpen(false);
-            router.refresh();
           }}
           onError={(msg) => toast({ kind: 'error', text: msg })}
           onCancel={() => setOpen(false)}

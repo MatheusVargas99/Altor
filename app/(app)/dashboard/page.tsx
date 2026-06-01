@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { fmtBRL } from '@/lib/utils';
-import { DashboardCharts } from './DashboardCharts';
+import { DashboardCharts } from './DashboardChartsLazy';
 import type { ContaPagar, ContaReceber, Empreendimento } from '@/types/db';
 
 export const dynamic = 'force-dynamic';
@@ -21,41 +21,54 @@ export default async function DashboardPage({
     .toISOString()
     .slice(0, 10);
 
-  const { data: empreendimentos } = await supabase
-    .from('empreendimentos')
-    .select('*')
-    .order('nome');
-
-  const empreendList = (empreendimentos as Empreendimento[]) ?? [];
   const obraId = searchParams.obra ?? null;
 
-  // Queries for 6-month window
+  const empreendQuery = supabase
+    .from('empreendimentos')
+    .select('id, nome, codigo_curto, status')
+    .order('nome');
+
+  const crCols = 'valor_aberto, valor_original, status, data_vencimento, empreendimento_id';
+  const cpCols = 'valor_aberto, valor_original, status, data_vencimento, empreendimento_id, categoria';
+
   let crQuery = supabase
     .from('contas_receber')
-    .select('*')
+    .select(crCols)
     .gte('data_vencimento', inicio6m)
     .lte('data_vencimento', fim6m);
   let cpQuery = supabase
     .from('contas_pagar')
-    .select('*')
+    .select(cpCols)
     .gte('data_vencimento', inicio6m)
     .lte('data_vencimento', fim6m);
+  let crTotalQuery = supabase.from('contas_receber').select('valor_pago').eq('status', 'PAGO');
+  let cpTotalQuery = supabase.from('contas_pagar').select('valor_pago').eq('status', 'PAGO');
+  let cpAllQuery = supabase.from('contas_pagar').select('empreendimento_id, valor_original');
   if (obraId) {
     crQuery = crQuery.eq('empreendimento_id', obraId);
     cpQuery = cpQuery.eq('empreendimento_id', obraId);
-  }
-
-  // Queries for totals (all time, no date filter)
-  let crTotalQuery = supabase.from('contas_receber').select('valor_pago').eq('status', 'PAGO');
-  let cpTotalQuery = supabase.from('contas_pagar').select('valor_pago').eq('status', 'PAGO');
-  if (obraId) {
     crTotalQuery = crTotalQuery.eq('empreendimento_id', obraId);
     cpTotalQuery = cpTotalQuery.eq('empreendimento_id', obraId);
+    cpAllQuery = cpAllQuery.eq('empreendimento_id', obraId);
   }
 
-  const [{ data: cr }, { data: cp }, { data: crTotal }, { data: cpTotal }] =
-    await Promise.all([crQuery, cpQuery, crTotalQuery, cpTotalQuery]);
+  const [
+    { data: empreendimentos },
+    { data: cr },
+    { data: cp },
+    { data: crTotal },
+    { data: cpTotal },
+    { data: cpAll },
+  ] = await Promise.all([
+    empreendQuery,
+    crQuery,
+    cpQuery,
+    crTotalQuery,
+    cpTotalQuery,
+    cpAllQuery,
+  ]);
 
+  const empreendList = (empreendimentos as Empreendimento[]) ?? [];
   const crList = (cr as ContaReceber[]) ?? [];
   const cpList = (cp as ContaPagar[]) ?? [];
 
@@ -144,11 +157,7 @@ export default async function DashboardPage({
     .filter((x) => x.valor > 0)
     .sort((a, b) => b.valor - a.valor);
 
-  // CP by empreendimento (bar + pie by obra)
-  // Fetch all CP (not date-filtered) for obra pie
-  let cpAllQuery = supabase.from('contas_pagar').select('empreendimento_id, valor_original');
-  if (obraId) cpAllQuery = cpAllQuery.eq('empreendimento_id', obraId);
-  const { data: cpAll } = await cpAllQuery;
+  // CP by empreendimento (cpAll já carregado no Promise.all acima)
   const obraMap: Record<string, number> = {};
   for (const r of cpAll ?? []) {
     if (!r.empreendimento_id) continue;
