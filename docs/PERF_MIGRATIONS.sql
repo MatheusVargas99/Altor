@@ -1,11 +1,19 @@
 -- =====================================================================
 -- ALTOR — Migrações de Performance
 -- =====================================================================
--- APLICAÇÃO: rode este arquivo no SQL Editor do Supabase (uma seção
--- por vez, conferindo o resultado de cada bloco antes do próximo).
+-- APLICAÇÃO: cole este arquivo INTEIRO no SQL Editor do Supabase e
+-- clique em "Run". Tudo roda em uma única transação (commit ao final).
 --
 -- Todas as instruções usam IF NOT EXISTS / CREATE OR REPLACE — podem
 -- ser executadas múltiplas vezes sem efeito colateral.
+--
+-- Nota técnica: os índices NÃO usam CONCURRENTLY porque o SQL Editor
+-- do Supabase executa tudo em transação (e CONCURRENTLY exige rodar
+-- fora de transação). Os locks aqui são breves (tabelas pequenas a
+-- médias). Se um dia precisar criar índices em produção sem qualquer
+-- lock, use `supabase db push` via CLI com migrações em arquivos
+-- separados, ou rode cada CREATE INDEX CONCURRENTLY individualmente
+-- via psql.
 --
 -- Data: 2026-06-01
 -- =====================================================================
@@ -14,55 +22,51 @@
 -- =====================================================================
 -- SEÇÃO A: ÍNDICES (cobertura para listagens e dashboard)
 -- =====================================================================
--- Criados como CONCURRENTLY para não travar tabelas em produção.
--- Em Supabase SQL Editor, abra cada um em uma execução separada (o
--- CONCURRENTLY não funciona dentro de transação).
--- =====================================================================
 
 -- Contas a pagar — filtros recorrentes: empreendimento + status + data
-create index concurrently if not exists idx_cp_obra_status_venc
+create index if not exists idx_cp_obra_status_venc
   on contas_pagar (empreendimento_id, status, data_vencimento desc);
 
-create index concurrently if not exists idx_cp_status_venc
+create index if not exists idx_cp_status_venc
   on contas_pagar (status, data_vencimento desc)
   where status in ('ABERTO','PARCIAL','ATRASADO');
 
-create index concurrently if not exists idx_cp_categoria
+create index if not exists idx_cp_categoria
   on contas_pagar (categoria) where categoria is not null;
 
 -- Contas a receber — mesmo padrão
-create index concurrently if not exists idx_cr_obra_status_venc
+create index if not exists idx_cr_obra_status_venc
   on contas_receber (empreendimento_id, status, data_vencimento desc);
 
-create index concurrently if not exists idx_cr_status_venc
+create index if not exists idx_cr_status_venc
   on contas_receber (status, data_vencimento desc)
   where status in ('ABERTO','PARCIAL','ATRASADO');
 
 -- Comissões — agenda + relatórios usam (data_prevista, empreendimento_id)
-create index concurrently if not exists idx_comissoes_obra_data
+create index if not exists idx_comissoes_obra_data
   on comissoes (empreendimento_id, data_prevista desc);
 
 -- Contratos — usados na agenda por status + vigência
-create index concurrently if not exists idx_contratos_status_vigencia
+create index if not exists idx_contratos_status_vigencia
   on contratos (status, data_vigencia_fim);
 
-create index concurrently if not exists idx_contratos_obra
+create index if not exists idx_contratos_obra
   on contratos (empreendimento_id);
 
 -- Medições — listagem por data
-create index concurrently if not exists idx_medicoes_obra_data
+create index if not exists idx_medicoes_obra_data
   on medicoes (empreendimento_id, data_medicao desc);
 
 -- Compras — listagem por aprovação
-create index concurrently if not exists idx_compras_obra_aprov
+create index if not exists idx_compras_obra_aprov
   on compras (empreendimento_id, data_aprovacao desc);
 
 -- Orçamentos — ordenação composta usada pela listagem
-create index concurrently if not exists idx_orc_obra_etapa_grupo
+create index if not exists idx_orc_obra_etapa_grupo
   on orcamentos (empreendimento_id, etapa, grupo_cotacao);
 
 -- Empreendimentos — filtro por status no dashboard
-create index concurrently if not exists idx_empreend_status
+create index if not exists idx_empreend_status
   on empreendimentos (status);
 
 
@@ -167,10 +171,10 @@ $$;
 -- =====================================================================
 -- SEÇÃO C: VERIFICAÇÃO
 -- =====================================================================
--- Rode estes selects depois de aplicar tudo para confirmar.
+-- Rode estes selects DEPOIS de aplicar tudo, para confirmar.
 -- =====================================================================
 
--- Listar índices criados
+-- Listar índices criados (deve mostrar 12 linhas)
 -- select indexname from pg_indexes
 -- where schemaname = 'public'
 --   and indexname like 'idx_%'
@@ -180,11 +184,3 @@ $$;
 -- select * from dashboard_totais(null);
 -- select * from dashboard_cp_por_obra(null);
 -- select * from dashboard_metricas_30d(null);
-
--- Explain analyze nos queries mais quentes (com obra_id real)
--- explain analyze
--- select valor_pago from contas_pagar where status = 'PAGO';
-
--- explain analyze
--- select * from contas_pagar where empreendimento_id = '<uuid>'
--- order by data_vencimento desc limit 500;
