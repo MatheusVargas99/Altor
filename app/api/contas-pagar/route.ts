@@ -24,11 +24,23 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: 'JSON inválido' }, { status: 400 });
   }
 
+  console.log('[API cp] raw body', JSON.stringify(raw));
   const parsed = contaPagarSchema.safeParse(raw);
   if (!parsed.success) {
-    console.log('[API cp] zod fail', parsed.error.issues[0]);
+    console.log('[API cp] zod issues', JSON.stringify(parsed.error.issues));
+    const first = parsed.error.issues[0];
+    const fieldPath = first?.path?.join('.') ?? '?';
+    const msg = first?.message ?? 'Inválido';
     return NextResponse.json(
-      { ok: false, error: parsed.error.issues[0]?.message ?? 'Inválido' },
+      {
+        ok: false,
+        error: `[${fieldPath}] ${msg}`,
+        issues: parsed.error.issues.map((i) => ({
+          path: i.path.join('.'),
+          message: i.message,
+          code: i.code,
+        })),
+      },
       { status: 400 },
     );
   }
