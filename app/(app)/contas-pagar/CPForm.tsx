@@ -11,7 +11,6 @@ import {
   type ParcelamentoInput,
 } from '@/lib/schemas/contas';
 import {
-  createContaPagar,
   criarContasPagarParceladas,
   updateContaPagar,
 } from '@/lib/actions/contas-pagar';

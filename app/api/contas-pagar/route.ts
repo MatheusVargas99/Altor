@@ -20,7 +20,7 @@ export async function POST(req: Request) {
   let raw: unknown;
   try {
     raw = await req.json();
-  } catch (e) {
+  } catch {
     return NextResponse.json({ ok: false, error: 'JSON inválido' }, { status: 400 });
   }
 
