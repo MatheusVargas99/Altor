@@ -1,22 +1,6 @@
 import { z } from 'zod';
 import { PERIODICIDADES } from '@/lib/parcelamento';
-
-const optStr = z
-  .union([z.string(), z.null(), z.undefined()])
-  .transform((v) => (v == null || v === '' ? null : String(v).trim()));
-
-const optUuid = z
-  .union([z.string(), z.null(), z.undefined()])
-  .transform((v) => (v == null || v === '' ? null : String(v)))
-  .refine((v) => v == null || /^[0-9a-f-]{36}$/i.test(v), 'UUID inválido');
-
-const optNum = z
-  .union([z.string(), z.number(), z.null(), z.undefined()])
-  .transform((v) => {
-    if (v === '' || v == null) return null;
-    const n = Number(typeof v === 'string' ? v.replace(',', '.') : v);
-    return Number.isFinite(n) ? n : null;
-  });
+import { optEnum, optNum, optStr, optUuid } from './_helpers';
 
 const reqNumPos = z
   .union([z.string(), z.number()])
@@ -28,20 +12,6 @@ const reqNumNonNeg = z
   .transform((v) => Number(typeof v === 'string' ? v.replace(',', '.') : v))
   .refine((n) => Number.isFinite(n) && n >= 0, 'Valor inválido');
 
-const comissao_benef = z.enum([
-  'CORRETOR_AUTONOMO',
-  'IMOBILIARIA',
-  'FUNCIONARIO_INTERNO',
-  'INDICADOR',
-] as const);
-
-const comissao_gatilho = z.enum([
-  'ASSINATURA',
-  'HABITE_SE',
-  'ENTREGA_CHAVES',
-  'PERSONALIZADO',
-] as const);
-
 const comissao_status = z.enum([
   'PREVISTA',
   'A_PAGAR',
@@ -51,20 +21,30 @@ const comissao_status = z.enum([
 ] as const);
 
 export const comissaoSchema = z.object({
-  empreendimento_id: optUuid,
-  cliente_id: optUuid,
-  beneficiario_tipo: comissao_benef.nullable().optional(),
-  beneficiario_id: optUuid,
+  empreendimento_id: optUuid.optional(),
+  cliente_id: optUuid.optional(),
+  beneficiario_tipo: optEnum([
+    'CORRETOR_AUTONOMO',
+    'IMOBILIARIA',
+    'FUNCIONARIO_INTERNO',
+    'INDICADOR',
+  ] as const),
+  beneficiario_id: optUuid.optional(),
   beneficiario_nome: z.string().min(2, 'Beneficiário obrigatório').max(300),
   valor_venda: reqNumNonNeg,
-  percentual: optNum.transform((v) => v ?? 0),
-  parcela: optStr,
+  percentual: optNum.transform((v) => v ?? 0).optional(),
+  parcela: optStr.optional(),
   valor_parcela: reqNumPos,
-  evento_gatilho: comissao_gatilho.nullable().optional(),
-  data_prevista: optStr,
-  data_paga: optStr,
+  evento_gatilho: optEnum([
+    'ASSINATURA',
+    'HABITE_SE',
+    'ENTREGA_CHAVES',
+    'PERSONALIZADO',
+  ] as const),
+  data_prevista: optStr.optional(),
+  data_paga: optStr.optional(),
   status: comissao_status.default('PREVISTA'),
-  observacoes: optStr,
+  observacoes: optStr.optional(),
 });
 
 export const parcelamentoComissaoSchema = z.object({

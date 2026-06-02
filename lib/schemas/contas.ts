@@ -7,48 +7,12 @@ import {
   ETAPAS_EAP,
 } from '@/types/db';
 import { PERIODICIDADES } from '@/lib/parcelamento';
-
-// ----- helpers -----
-// Em Zod 4, `.transform()` sozinho NÃO marca o field como opcional num object.
-// Os helpers abaixo declaram `.optional()` explicitamente e usam `preprocess`
-// para nivelar `null`/`undefined`/string vazia → null antes da regra dura.
-const nullifyEmpty = (v: unknown) => (v === '' || v == null ? null : v);
-
-const optStr = z.preprocess(
-  nullifyEmpty,
-  z
-    .string()
-    .nullable()
-    .transform((v) => (v == null ? null : v.trim())),
-);
-
-const optUuid = z.preprocess(
-  nullifyEmpty,
-  z
-    .string()
-    .nullable()
-    .refine((v) => v == null || /^[0-9a-f-]{36}$/i.test(v), 'UUID inválido'),
-);
+import { optEnum, optNum, optStr, optUuid } from './_helpers';
 
 const reqNum = z
   .union([z.string(), z.number()])
   .transform((v) => Number(typeof v === 'string' ? v.replace(',', '.') : v))
   .refine((n) => Number.isFinite(n) && n > 0, 'Valor obrigatório > 0');
-
-const optNum = z.preprocess(
-  nullifyEmpty,
-  z
-    .union([z.string(), z.number(), z.null()])
-    .transform((v) => {
-      if (v == null) return null;
-      const n = Number(typeof v === 'string' ? v.replace(',', '.') : v);
-      return Number.isFinite(n) ? n : null;
-    }),
-);
-
-// Enum opcional aceita string vazia/null/undefined → null
-const optEnum = <T extends readonly [string, ...string[]]>(values: T) =>
-  z.preprocess(nullifyEmpty, z.enum(values).nullable()).optional();
 
 const cr_status = z.enum([
   'ABERTO',
@@ -59,7 +23,6 @@ const cr_status = z.enum([
 ] as const);
 const cp_status = cr_status;
 
-// ----- schemas -----
 export const contaReceberSchema = z.object({
   empreendimento_id: optUuid.optional(),
   cliente_id: optUuid.optional(),

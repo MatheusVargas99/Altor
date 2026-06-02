@@ -37,32 +37,18 @@ function aplicarAutoFillPago(input: ContaPagarInput): ContaPagarInput {
 export async function createContaPagar(
   input: ContaPagarInput,
 ): Promise<Result<{ id: string }>> {
-  console.log('[DEBUG cp] createContaPagar ENTER', {
-    descricao: input?.descricao?.slice(0, 60),
-    valor: input?.valor_original,
-    vencimento: input?.data_vencimento,
-  });
   const parsed = contaPagarSchema.safeParse(input);
-  if (!parsed.success) {
-    console.log('[DEBUG cp] zod fail', parsed.error.issues[0]);
+  if (!parsed.success)
     return { ok: false, error: parsed.error.issues[0]?.message ?? 'Inválido' };
-  }
-  console.log('[DEBUG cp] zod ok');
   const final = aplicarAutoFillPago(parsed.data);
   const { supabase, user } = await requireUser();
-  console.log('[DEBUG cp] user ok', user.id);
   const { data, error } = await supabase
     .from('contas_pagar')
     .insert({ ...final, criado_por: user.id, atualizado_por: user.id })
     .select('id')
     .single();
-  if (error) {
-    console.log('[DEBUG cp] insert error', error);
-    return { ok: false, error: error.message };
-  }
-  console.log('[DEBUG cp] insert ok', data?.id);
+  if (error) return { ok: false, error: error.message };
   revalidateFinanceiro();
-  console.log('[DEBUG cp] revalidate ok');
   return { ok: true, data: { id: data.id } };
 }
 

@@ -7,16 +7,13 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 /**
- * Bypass route para criar conta a pagar via fetch direto, sem passar pelo
- * mecanismo de Server Actions do Next.js (que está travando para o usuário —
- * fetch direto à mesma origem retorna 200 normalmente, mas o action proxy
- * do Next.js client runtime não está nem fazendo o POST).
- *
- * Mantém exatamente a mesma lógica de validação, auth e insert do server
- * action `createContaPagar` em lib/actions/contas-pagar.ts.
+ * Rota POST de criar conta a pagar via fetch direto, alternativa ao Server
+ * Action. Mantida em produção como safety net porque o Server Action client
+ * runtime do Next.js 14.2 mostrou comportamento intermitente para o usuário
+ * (button stuck em "Salvando..." sem POST chegando ao Vercel).
+ * Mantém a mesma lógica de validação, auth e insert de `createContaPagar`.
  */
 export async function POST(req: Request) {
-  console.log('[API cp] POST recebido');
   let raw: unknown;
   try {
     raw = await req.json();
@@ -24,28 +21,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: false, error: 'JSON inválido' }, { status: 400 });
   }
 
-  console.log('[API cp] raw body', JSON.stringify(raw));
   const parsed = contaPagarSchema.safeParse(raw);
   if (!parsed.success) {
-    console.log('[API cp] zod issues', JSON.stringify(parsed.error.issues));
     const first = parsed.error.issues[0];
-    const fieldPath = first?.path?.join('.') ?? '?';
-    const msg = first?.message ?? 'Inválido';
     return NextResponse.json(
-      {
-        ok: false,
-        error: `[${fieldPath}] ${msg}`,
-        issues: parsed.error.issues.map((i) => ({
-          path: i.path.join('.'),
-          message: i.message,
-          code: i.code,
-        })),
-      },
+      { ok: false, error: first?.message ?? 'Inválido' },
       { status: 400 },
     );
   }
 
-  // aplicarAutoFillPago — réplica do server action
   const input = parsed.data;
   const final =
     input.status === 'PAGO'
@@ -67,7 +51,6 @@ export async function POST(req: Request) {
   if (!user) {
     return NextResponse.json({ ok: false, error: 'Não autenticado' }, { status: 401 });
   }
-  console.log('[API cp] user ok', user.id);
 
   const { data, error } = await supabase
     .from('contas_pagar')
@@ -75,12 +58,8 @@ export async function POST(req: Request) {
     .select('id')
     .single();
 
-  if (error) {
-    console.log('[API cp] insert error', error.message);
-    return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
-  }
+  if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 400 });
 
-  console.log('[API cp] insert ok', data.id);
   revalidatePath('/contas-pagar');
   revalidatePath('/dashboard');
   revalidatePath('/agenda');

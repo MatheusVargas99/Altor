@@ -1,9 +1,6 @@
 import { z } from 'zod';
 import { ETAPAS_EAP } from '@/types/db';
-
-const optStr = z
-  .union([z.string(), z.null(), z.undefined()])
-  .transform((v) => (v == null || v === '' ? null : String(v).trim()));
+import { num0, optEnum, optStr } from './_helpers';
 
 const reqUuid = z
   .string()
@@ -15,29 +12,21 @@ const reqNum = z
   .transform((v) => Number(typeof v === 'string' ? v.replace(',', '.') : v))
   .refine((n) => Number.isFinite(n) && n >= 0, 'Valor inválido');
 
-const optPct = z
-  .union([z.string(), z.number(), z.null(), z.undefined()])
-  .transform((v) => {
-    if (v === '' || v == null) return 0;
-    const n = Number(typeof v === 'string' ? v.replace(',', '.') : v);
-    return Number.isFinite(n) ? n : 0;
-  });
-
 export const medicaoSchema = z.object({
   empreendimento_id: reqUuid,
   empresa_id: reqUuid,
-  etapa: z.enum(ETAPAS_EAP as [string, ...string[]]).nullable().optional(),
+  etapa: optEnum(ETAPAS_EAP as [string, ...string[]]),
   descricao: z.string().min(2, 'Descrição obrigatória').max(300),
   valor_orcado: reqNum,
-  numero_medicao: optStr,
+  numero_medicao: optStr.optional(),
   valor_medicao: reqNum,
-  percentual_medicao: optPct,
-  data_medicao: optStr,
-  data_pagamento: optStr,
+  percentual_medicao: num0,
+  data_medicao: optStr.optional(),
+  data_pagamento: optStr.optional(),
   status: z
     .enum(['PREVISTA', 'MEDIDA', 'APROVADA', 'PAGA', 'CANCELADA'] as const)
     .default('PREVISTA'),
-  observacoes: optStr,
+  observacoes: optStr.optional(),
 });
 
 export type MedicaoInput = z.infer<typeof medicaoSchema>;
