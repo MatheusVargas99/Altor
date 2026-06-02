@@ -88,10 +88,28 @@ export function CPForm({
 
   const onSubmit = (data: ContaPagarInput) => {
     startTransition(async () => {
-      const res = conta
-        ? await updateContaPagar(conta.id, data)
-        : await createContaPagar(data);
-      if (!res.ok) return onError(res.error);
+      // Para criar: bypass do Server Action via route POST /api/contas-pagar.
+      // O Server Action client runtime do Next.js 14 não estava conseguindo
+      // disparar o fetch para alguns usuários — fetch direto resolve sem
+      // depender desse mecanismo. Edit continua via server action por
+      // enquanto (não havia bug reportado para edição).
+      let res: { ok: boolean; error?: string };
+      if (conta) {
+        const r = await updateContaPagar(conta.id, data);
+        res = r;
+      } else {
+        try {
+          const resp = await fetch('/api/contas-pagar', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data),
+          });
+          res = await resp.json();
+        } catch (e) {
+          res = { ok: false, error: (e as Error).message ?? 'Falha na requisição' };
+        }
+      }
+      if (!res.ok) return onError(res.error ?? 'Erro desconhecido');
       onDone(conta ? 'Conta atualizada.' : 'Conta criada.');
     });
   };
