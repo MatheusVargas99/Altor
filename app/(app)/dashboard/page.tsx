@@ -154,6 +154,9 @@ export default async function DashboardPage({
   );
   const saldoCaixa = totalRecebido - totalPago;
 
+  // Caixa de hoje + o que ainda entra/sai no período escolhido
+  const saldoTotalPrevisto = saldoCaixa + saldo30;
+
   // 6-month flow
   const monthKey = (d: string) => d.slice(0, 7);
   const monthsArr: string[] = [];
@@ -296,7 +299,7 @@ export default async function DashboardPage({
       </div>
 
       {/* Row 2: Totals */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="card">
           <div className="text-xs uppercase text-text-dim">Total recebido (período total)</div>
           <div className="text-xl font-semibold text-success mt-1 valor-sensivel">{fmtBRL(totalRecebido)}</div>
@@ -309,6 +312,21 @@ export default async function DashboardPage({
           <div className="text-xs uppercase text-text-dim">Saldo em caixa</div>
           <div className={`text-xl font-semibold mt-1 valor-sensivel ${saldoCaixa >= 0 ? 'text-success' : 'text-danger'}`}>
             {fmtBRL(saldoCaixa)}
+          </div>
+        </div>
+        <div className="card border-primary/40">
+          <div className="text-xs uppercase text-text-dim">
+            Saldo total previsto em caixa
+          </div>
+          <div
+            className={`text-xl font-semibold mt-1 valor-sensivel ${
+              saldoTotalPrevisto >= 0 ? 'text-success' : 'text-danger'
+            }`}
+          >
+            {fmtBRL(saldoTotalPrevisto)}
+          </div>
+          <div className="text-xs text-text-dim mt-1">
+            caixa + saldo previsto ({per.sufixo})
           </div>
         </div>
       </div>
