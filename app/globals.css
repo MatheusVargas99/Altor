@@ -29,4 +29,13 @@
   .label {
     @apply block text-sm font-medium text-text-dim mb-1;
   }
+  /* Marcador dos valores que o botão "Ocultar dados" esconde */
+  .valor-sensivel {
+    @apply transition-[filter] duration-150;
+  }
+  html.valores-ocultos .valor-sensivel {
+    filter: blur(9px);
+    user-select: none;
+    pointer-events: none;
+  }
 }
