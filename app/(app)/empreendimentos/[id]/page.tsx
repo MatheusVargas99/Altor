@@ -50,7 +50,7 @@ export default async function EmpreendimentoDetalhe({
     ) / 100;
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-6">
       <PageHeader
         title={e.nome}
         description={
@@ -69,40 +69,41 @@ export default async function EmpreendimentoDetalhe({
         }
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="card">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <div className="card min-w-0 p-3 sm:p-4">
           <div className="text-xs uppercase text-text-dim">VGV estimado</div>
-          <div className="text-xl font-semibold text-primary mt-1">
+          <div className="mt-1 break-words text-base font-semibold text-primary sm:text-xl">
             {fmtBRL(e.vgv_estimado)}
           </div>
         </div>
-        <div className="card">
+        <div className="card min-w-0 p-3 sm:p-4">
           <div className="text-xs uppercase text-text-dim">Custo total estimado</div>
-          <div className="text-xl font-semibold text-text mt-1">
+          <div className="mt-1 break-words text-base font-semibold text-text sm:text-xl">
             {fmtBRL(e.custo_total_estimado)}
           </div>
         </div>
-        <div className="card">
+        <div className="card min-w-0 p-3 sm:p-4">
           <div className="text-xs uppercase text-text-dim">Entrega prevista</div>
-          <div className="text-xl font-semibold text-text mt-1">
+          <div className="mt-1 break-words text-base font-semibold text-text sm:text-xl">
             {fmtDate(e.data_entrega_prevista) || '—'}
           </div>
         </div>
-        <div className="card">
+        <div className="card min-w-0 p-3 sm:p-4">
           <div className="text-xs uppercase text-text-dim">Avanço físico</div>
-          <div className="text-xl font-semibold text-primary mt-1">
+          <div className="mt-1 break-words text-base font-semibold text-primary sm:text-xl">
             {percentualFisico.toFixed(1)}%
           </div>
         </div>
       </div>
 
-      <section>
+      <section className="min-w-0">
         <h2 className="text-lg font-medium mb-3">Cronograma (EAP)</h2>
         <div className="overflow-x-auto rounded-lg border border-border">
-          <table className="w-full text-sm">
+          <table className="w-full whitespace-nowrap text-sm">
             <thead className="bg-bg-3 text-text-dim">
               <tr>
-                <th className="px-3 py-2 text-left">Etapa</th>
+                {/* Etapa fica fixa ao rolar a tabela para o lado no celular */}
+                <th className="sticky left-0 z-10 bg-bg-3 px-3 py-2 text-left">Etapa</th>
                 <th className="px-3 py-2 text-left">Marco</th>
                 <th className="px-3 py-2 text-right">Peso</th>
                 <th className="px-3 py-2 text-right">% Físico</th>
@@ -126,7 +127,9 @@ export default async function EmpreendimentoDetalhe({
                       : 'text-success';
                 return (
                   <tr key={x.id} className="border-t border-border">
-                    <td className="px-3 py-2 text-xs">{x.etapa.replaceAll('_', ' ')}</td>
+                    <td className="sticky left-0 z-10 bg-bg px-3 py-2 text-xs">
+                      {x.etapa.replaceAll('_', ' ')}
+                    </td>
                     <td className="px-3 py-2">{x.marco}</td>
                     <td className="px-3 py-2 text-right">
                       {(Number(x.peso) * 100).toFixed(1)}%
@@ -149,9 +152,8 @@ export default async function EmpreendimentoDetalhe({
                 );
               })}
               <tr className="border-t-2 border-border bg-bg-3 font-medium">
-                <td className="px-3 py-2" colSpan={4}>
-                  Totais
-                </td>
+                <td className="sticky left-0 z-10 bg-bg-3 px-3 py-2">Totais</td>
+                <td className="px-3 py-2" colSpan={3} />
                 <td className="px-3 py-2 text-right">{fmtBRL(totalOrcado)}</td>
                 <td className="px-3 py-2 text-right">{fmtBRL(totalComprometido)}</td>
                 <td className="px-3 py-2 text-right">{fmtBRL(totalPago)}</td>

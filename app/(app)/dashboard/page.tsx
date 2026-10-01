@@ -16,6 +16,10 @@ const PERIODOS = {
 } as const;
 type Periodo = keyof typeof PERIODOS;
 
+// Chip de filtro: alvo de toque de 40px no celular, compacto a partir de md
+const CHIP =
+  'inline-flex min-h-[40px] items-center rounded border px-3 py-1 text-sm md:min-h-0';
+
 export default async function DashboardPage({
   searchParams,
 }: {
@@ -204,7 +208,7 @@ export default async function DashboardPage({
     .sort((a, b) => b.valor - a.valor);
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-4 md:p-6 space-y-6">
       {/* Aplica o modo oculto antes da primeira pintura, evitando piscar os valores */}
       <script
         dangerouslySetInnerHTML={{
@@ -221,7 +225,7 @@ export default async function DashboardPage({
       <div className="flex flex-wrap gap-2">
         <Link
           href={hrefDash(null, periodo)}
-          className={`rounded px-3 py-1 text-sm border ${
+          className={`${CHIP} ${
             !obraId
               ? 'border-primary text-primary bg-primary/10'
               : 'border-border text-text-dim hover:border-primary/50'
@@ -233,7 +237,7 @@ export default async function DashboardPage({
           <Link
             key={o.id}
             href={hrefDash(o.id, periodo)}
-            className={`rounded px-3 py-1 text-sm border ${
+            className={`${CHIP} ${
               obraId === o.id
                 ? 'border-primary text-primary bg-primary/10'
                 : 'border-border text-text-dim hover:border-primary/50'
@@ -251,7 +255,7 @@ export default async function DashboardPage({
           <Link
             key={p}
             href={hrefDash(obraId, p)}
-            className={`rounded px-3 py-1 text-sm border ${
+            className={`${CHIP} ${
               periodo === p
                 ? 'border-primary text-primary bg-primary/10'
                 : 'border-border text-text-dim hover:border-primary/50'
@@ -260,7 +264,7 @@ export default async function DashboardPage({
             {PERIODOS[p].label}
           </Link>
         ))}
-        <span className="text-xs text-text-dim ml-1">
+        <span className="basis-full text-xs text-text-dim sm:ml-1 sm:basis-auto">
           {fimPeriodoStr
             ? `vencimentos de hoje até ${fimPeriodoStr.split('-').reverse().join('/')}`
             : 'todos os vencimentos a partir de hoje'}
@@ -268,58 +272,58 @@ export default async function DashboardPage({
       </div>
 
       {/* Row 1: period widgets */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="card">
-          <div className="text-xs uppercase text-text-dim">Empreendimentos ativos</div>
-          <div className="text-2xl font-semibold text-primary mt-1 valor-sensivel">{empreendAtivos}</div>
-          <Link href="/empreendimentos" className="text-xs text-info hover:underline mt-1 inline-block">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="card min-w-0 p-3 sm:p-4">
+          <div className="text-[11px] uppercase leading-tight text-text-dim sm:text-xs">Empreendimentos ativos</div>
+          <div className="text-base sm:text-xl md:text-2xl font-semibold tabular-nums break-words text-primary mt-1 valor-sensivel">{empreendAtivos}</div>
+          <Link href="/empreendimentos" className="mt-1 inline-flex min-h-[36px] items-center text-xs text-info hover:underline md:min-h-0">
             ver obras →
           </Link>
         </div>
-        <div className="card">
-          <div className="text-xs uppercase text-text-dim">A receber ({per.sufixo})</div>
-          <div className="text-2xl font-semibold text-success mt-1 valor-sensivel">{fmtBRL(aReceber30)}</div>
-          <Link href="/contas-receber" className="text-xs text-info hover:underline mt-1 inline-block">
+        <div className="card min-w-0 p-3 sm:p-4">
+          <div className="text-[11px] uppercase leading-tight text-text-dim sm:text-xs">A receber ({per.sufixo})</div>
+          <div className="text-base sm:text-xl md:text-2xl font-semibold tabular-nums break-words text-success mt-1 valor-sensivel">{fmtBRL(aReceber30)}</div>
+          <Link href="/contas-receber" className="mt-1 inline-flex min-h-[36px] items-center text-xs text-info hover:underline md:min-h-0">
             CR →
           </Link>
         </div>
-        <div className="card">
-          <div className="text-xs uppercase text-text-dim">A pagar ({per.sufixo})</div>
-          <div className="text-2xl font-semibold text-warn mt-1 valor-sensivel">{fmtBRL(aPagar30)}</div>
-          <Link href="/contas-pagar" className="text-xs text-info hover:underline mt-1 inline-block">
+        <div className="card min-w-0 p-3 sm:p-4">
+          <div className="text-[11px] uppercase leading-tight text-text-dim sm:text-xs">A pagar ({per.sufixo})</div>
+          <div className="text-base sm:text-xl md:text-2xl font-semibold tabular-nums break-words text-warn mt-1 valor-sensivel">{fmtBRL(aPagar30)}</div>
+          <Link href="/contas-pagar" className="mt-1 inline-flex min-h-[36px] items-center text-xs text-info hover:underline md:min-h-0">
             CP →
           </Link>
         </div>
-        <div className="card">
-          <div className="text-xs uppercase text-text-dim">Saldo previsto ({per.sufixo})</div>
-          <div className={`text-2xl font-semibold mt-1 valor-sensivel ${saldo30 >= 0 ? 'text-success' : 'text-danger'}`}>
+        <div className="card min-w-0 p-3 sm:p-4">
+          <div className="text-[11px] uppercase leading-tight text-text-dim sm:text-xs">Saldo previsto ({per.sufixo})</div>
+          <div className={`text-base sm:text-xl md:text-2xl font-semibold tabular-nums break-words mt-1 valor-sensivel ${saldo30 >= 0 ? 'text-success' : 'text-danger'}`}>
             {fmtBRL(saldo30)}
           </div>
         </div>
       </div>
 
       {/* Row 2: Totals */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="card">
-          <div className="text-xs uppercase text-text-dim">Total recebido (período total)</div>
-          <div className="text-xl font-semibold text-success mt-1 valor-sensivel">{fmtBRL(totalRecebido)}</div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div className="card min-w-0 p-3 sm:p-4">
+          <div className="text-[11px] uppercase leading-tight text-text-dim sm:text-xs">Total recebido (período total)</div>
+          <div className="text-base sm:text-xl font-semibold tabular-nums break-words text-success mt-1 valor-sensivel">{fmtBRL(totalRecebido)}</div>
         </div>
-        <div className="card">
-          <div className="text-xs uppercase text-text-dim">Total pago (período total)</div>
-          <div className="text-xl font-semibold text-warn mt-1 valor-sensivel">{fmtBRL(totalPago)}</div>
+        <div className="card min-w-0 p-3 sm:p-4">
+          <div className="text-[11px] uppercase leading-tight text-text-dim sm:text-xs">Total pago (período total)</div>
+          <div className="text-base sm:text-xl font-semibold tabular-nums break-words text-warn mt-1 valor-sensivel">{fmtBRL(totalPago)}</div>
         </div>
-        <div className="card">
-          <div className="text-xs uppercase text-text-dim">Saldo em caixa</div>
-          <div className={`text-xl font-semibold mt-1 valor-sensivel ${saldoCaixa >= 0 ? 'text-success' : 'text-danger'}`}>
+        <div className="card min-w-0 p-3 sm:p-4">
+          <div className="text-[11px] uppercase leading-tight text-text-dim sm:text-xs">Saldo em caixa</div>
+          <div className={`text-base sm:text-xl font-semibold tabular-nums break-words mt-1 valor-sensivel ${saldoCaixa >= 0 ? 'text-success' : 'text-danger'}`}>
             {fmtBRL(saldoCaixa)}
           </div>
         </div>
-        <div className="card border-primary/40">
-          <div className="text-xs uppercase text-text-dim">
+        <div className="card min-w-0 border-primary/40 p-3 sm:p-4">
+          <div className="text-[11px] uppercase leading-tight text-text-dim sm:text-xs">
             Saldo total previsto em caixa
           </div>
           <div
-            className={`text-xl font-semibold mt-1 valor-sensivel ${
+            className={`text-base sm:text-xl font-semibold tabular-nums break-words mt-1 valor-sensivel ${
               saldoTotalPrevisto >= 0 ? 'text-success' : 'text-danger'
             }`}
           >
@@ -332,18 +336,18 @@ export default async function DashboardPage({
       </div>
 
       {/* Row 3: Atrasados */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="card">
-          <div className="text-xs uppercase text-text-dim">Atrasado a receber</div>
-          <div className="text-xl font-semibold text-danger mt-1 valor-sensivel">{fmtBRL(atrasadoCR)}</div>
+      <div className="grid grid-cols-2 gap-3 sm:gap-4">
+        <div className="card min-w-0 p-3 sm:p-4">
+          <div className="text-[11px] uppercase leading-tight text-text-dim sm:text-xs">Atrasado a receber</div>
+          <div className="text-base sm:text-xl font-semibold tabular-nums break-words text-danger mt-1 valor-sensivel">{fmtBRL(atrasadoCR)}</div>
         </div>
-        <div className="card">
-          <div className="text-xs uppercase text-text-dim">Atrasado a pagar</div>
-          <div className="text-xl font-semibold text-danger mt-1 valor-sensivel">{fmtBRL(atrasadoCP)}</div>
+        <div className="card min-w-0 p-3 sm:p-4">
+          <div className="text-[11px] uppercase leading-tight text-text-dim sm:text-xs">Atrasado a pagar</div>
+          <div className="text-base sm:text-xl font-semibold tabular-nums break-words text-danger mt-1 valor-sensivel">{fmtBRL(atrasadoCP)}</div>
         </div>
       </div>
 
-      <div className="valor-sensivel">
+      <div className="valor-sensivel min-w-0">
         <DashboardCharts
           fluxo={fluxo}
           categorias={categorias}

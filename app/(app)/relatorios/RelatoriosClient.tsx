@@ -42,6 +42,21 @@ function fmtBRL(v: number) {
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
 }
 
+function esc(v: string | null | undefined) {
+  return (v ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;');
+}
+
+/** iPhone/iPad (inclusive iPadOS que se identifica como Mac) e Android. */
+function ehCelularOuTablet() {
+  const ua = navigator.userAgent;
+  if (/iPad|iPhone|iPod|Android/i.test(ua)) return true;
+  return /Macintosh/.test(ua) && navigator.maxTouchPoints > 1;
+}
+
 function fmtDate(d: string | null) {
   if (!d) return '—';
   const [y, m, day] = d.split('-');
@@ -175,8 +190,8 @@ export function RelatoriosClient({
         const pago = Number(r.custo_pago);
         const pct = Number(r.percentual_fisico);
         return `<tr style="background:${i % 2 === 0 ? '#ffffff' : '#f9f7f3'}">
-          <td style="padding:6px 10px;font-weight:600;color:#B8923A;white-space:nowrap">${r.marco}</td>
-          <td style="padding:6px 10px;font-size:11px">${r.etapa.replaceAll('_', ' ')}</td>
+          <td style="padding:6px 10px;font-weight:600;color:#B8923A;white-space:nowrap">${esc(r.marco)}</td>
+          <td style="padding:6px 10px;font-size:11px">${esc(r.etapa.replaceAll('_', ' '))}</td>
           <td style="padding:6px 10px;min-width:90px">
             <div style="display:flex;align-items:center;gap:4px">${progBar(pct)}</div>
           </td>
@@ -194,7 +209,7 @@ export function RelatoriosClient({
       ? '<tr><td colspan="5" style="text-align:center;padding:12px;color:#888;font-style:italic">Nenhum lançamento no período</td></tr>'
       : crRows.map((r, i) => `
         <tr style="background:${i % 2 === 0 ? '#ffffff' : '#f9f7f3'}">
-          <td style="padding:6px 10px">${r.descricao}${r.numero_parcela ? ` <span style="color:#888;font-size:11px">(${r.numero_parcela})</span>` : ''}</td>
+          <td style="padding:6px 10px">${esc(r.descricao)}${r.numero_parcela ? ` <span style="color:#888;font-size:11px">(${esc(r.numero_parcela)})</span>` : ''}</td>
           <td style="padding:6px 10px;white-space:nowrap">${fmtDate(r.data_vencimento)}</td>
           <td style="padding:6px 10px;text-align:right;white-space:nowrap">${fmtBRL(Number(r.valor_original))}</td>
           <td style="padding:6px 10px;text-align:right;white-space:nowrap;font-weight:600;color:#1a6b3c">${fmtBRL(Number(r.valor_pago))}</td>
@@ -205,8 +220,8 @@ export function RelatoriosClient({
       ? '<tr><td colspan="6" style="text-align:center;padding:12px;color:#888;font-style:italic">Nenhum lançamento no período</td></tr>'
       : cpRows.map((r, i) => `
         <tr style="background:${i % 2 === 0 ? '#ffffff' : '#f9f7f3'}">
-          <td style="padding:6px 10px">${r.descricao}${r.numero_documento ? ` <span style="color:#888;font-size:11px">(${r.numero_documento})</span>` : ''}</td>
-          <td style="padding:6px 10px;font-size:11px;color:#555">${r.categoria?.replaceAll('_', ' ') ?? '—'}</td>
+          <td style="padding:6px 10px">${esc(r.descricao)}${r.numero_documento ? ` <span style="color:#888;font-size:11px">(${esc(r.numero_documento)})</span>` : ''}</td>
+          <td style="padding:6px 10px;font-size:11px;color:#555">${esc(r.categoria?.replaceAll('_', ' ') ?? '—')}</td>
           <td style="padding:6px 10px;white-space:nowrap">${fmtDate(r.data_vencimento)}</td>
           <td style="padding:6px 10px;text-align:right;white-space:nowrap">${fmtBRL(Number(r.valor_original))}</td>
           <td style="padding:6px 10px;text-align:right;white-space:nowrap;font-weight:600;color:#a31515">${fmtBRL(Number(r.valor_pago))}</td>
@@ -217,7 +232,7 @@ export function RelatoriosClient({
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<title>Relatório ${tipoLabel[tipoAtual]} — ${obraLabel}</title>
+<title>Relatório ${tipoLabel[tipoAtual]} — ${esc(obraLabel)}</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body { font-family: Arial, Helvetica, sans-serif; font-size: 12px; color: #1a1a1a; background: #fff; }
@@ -271,7 +286,13 @@ export function RelatoriosClient({
   .footer-brand { font-family: Georgia, serif; font-size: 10px; letter-spacing: 3px; color: #B8923A; text-transform: uppercase; }
   .footer-meta { font-size: 10px; color: #aaa; text-align: right; }
 
+  /* Barra só da aba aberta no celular — some na impressão */
+  .mobile-bar { position: sticky; top: 0; z-index: 10; display: flex; gap: 16px; padding: 20px 36px; background: #F5F1E8; border-bottom: 1px solid #e0d8cc; }
+  .mobile-bar button { flex: 1; font: 600 40px Arial, sans-serif; padding: 28px 16px; border-radius: 10px; border: 2px solid #B8923A; background: #fff; color: #0A0A0A; }
+  .mobile-bar button.primary { background: #B8923A; color: #0A0A0A; }
+
   @media print {
+    .mobile-bar { display: none !important; }
     body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
     .header { -webkit-print-color-adjust: exact; }
     .summary { -webkit-print-color-adjust: exact; }
@@ -279,7 +300,7 @@ export function RelatoriosClient({
 </style>
 </head>
 <body>
-
+__MOBILE_BAR__
 <!-- Cabeçalho Altor -->
 <div class="header">
   <div class="header-left">
@@ -304,7 +325,7 @@ export function RelatoriosClient({
 <div class="report-meta">
   <div>
     <div class="report-title">Relatório ${tipoLabel[tipoAtual]} de Contas</div>
-    <div class="report-obra">${obraLabel}</div>
+    <div class="report-obra">${esc(obraLabel)}</div>
   </div>
   <div class="report-period">
     Período: ${fmtDate(periodoInicio)} a ${fmtDate(periodoFim)}
@@ -386,17 +407,38 @@ export function RelatoriosClient({
 </body>
 </html>`;
 
-    // Use hidden iframe to avoid popup blocker
+    // Celular/tablet: Safari iOS (e alguns Chrome Android) ignora print() em iframe
+    // oculto ou imprime a página de fora. Abre o relatório numa aba própria, com
+    // botão de imprimir/salvar PDF, e dispara a impressão automaticamente lá.
+    if (ehCelularOuTablet()) {
+      const barra = `<div class="mobile-bar">
+  <button type="button" onclick="window.close()">Fechar</button>
+  <button type="button" class="primary" onclick="window.print()">Imprimir / Salvar PDF</button>
+</div>
+<script>(function(){var ok=false;function p(){if(ok)return;ok=true;setTimeout(function(){window.print()},400)}window.addEventListener('load',p);setTimeout(p,1500)})()</script>`;
+      const w = window.open('', '_blank');
+      if (w) {
+        w.document.open();
+        w.document.write(html.replace('__MOBILE_BAR__', barra));
+        w.document.close();
+        return;
+      }
+      // Pop-up bloqueado: segue para o iframe abaixo
+    }
+
+    // Desktop: iframe fora da tela, mas com tamanho real (iframe de 1px quebra em alguns navegadores)
     const existing = document.getElementById('__pdf_iframe__');
     if (existing) existing.remove();
     const iframe = document.createElement('iframe');
     iframe.id = '__pdf_iframe__';
-    iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;';
+    iframe.setAttribute('aria-hidden', 'true');
+    iframe.style.cssText =
+      'position:fixed;top:0;left:-10000px;width:900px;height:1200px;border:0;';
     document.body.appendChild(iframe);
     const doc = iframe.contentDocument || iframe.contentWindow?.document;
     if (!doc) return;
     doc.open();
-    doc.write(html);
+    doc.write(html.replace('__MOBILE_BAR__', ''));
     doc.close();
     setTimeout(() => {
       iframe.contentWindow?.focus();
@@ -405,7 +447,7 @@ export function RelatoriosClient({
   };
 
   return (
-    <div className="space-y-4 max-w-3xl">
+    <div className="min-w-0 space-y-4 max-w-3xl">
       <div className="card space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
@@ -460,23 +502,23 @@ export function RelatoriosClient({
 
       {/* Preview summary */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <div className="card">
+        <div className="card min-w-0 p-3 sm:p-4">
           <div className="text-xs text-text-dim uppercase">CR no período</div>
           <div className="text-lg font-semibold text-text mt-1">{crRows.length} lanç.</div>
-          <div className="text-sm text-success">{fmtBRL(totalCROriginal)}</div>
+          <div className="text-sm text-success tabular-nums break-words">{fmtBRL(totalCROriginal)}</div>
         </div>
-        <div className="card">
+        <div className="card min-w-0 p-3 sm:p-4">
           <div className="text-xs text-text-dim uppercase">CP no período</div>
           <div className="text-lg font-semibold text-text mt-1">{cpRows.length} lanç.</div>
-          <div className="text-sm text-warn">{fmtBRL(totalCPOriginal)}</div>
+          <div className="text-sm text-warn tabular-nums break-words">{fmtBRL(totalCPOriginal)}</div>
         </div>
-        <div className="card">
+        <div className="card min-w-0 p-3 sm:p-4">
           <div className="text-xs text-text-dim uppercase">Recebido</div>
-          <div className="text-lg font-semibold text-success mt-1">{fmtBRL(totalCRPago)}</div>
+          <div className="text-base sm:text-lg font-semibold text-success mt-1 tabular-nums break-words">{fmtBRL(totalCRPago)}</div>
         </div>
-        <div className="card">
+        <div className="card min-w-0 p-3 sm:p-4">
           <div className="text-xs text-text-dim uppercase">Resultado</div>
-          <div className={`text-lg font-semibold mt-1 ${saldo >= 0 ? 'text-success' : 'text-danger'}`}>
+          <div className={`text-base sm:text-lg font-semibold mt-1 tabular-nums break-words ${saldo >= 0 ? 'text-success' : 'text-danger'}`}>
             {fmtBRL(saldo)}
           </div>
         </div>
@@ -485,25 +527,25 @@ export function RelatoriosClient({
       {/* CR preview table */}
       <div>
         <h3 className="text-sm font-medium text-text mb-2">Contas a Receber ({crRows.length})</h3>
-        <div className="overflow-x-auto rounded border border-border">
+        <div className="overflow-x-auto overscroll-x-contain rounded border border-border">
           <table className="w-full text-xs">
             <thead className="bg-bg-3 text-text-dim">
               <tr>
-                <th className="px-3 py-2 text-left">Descrição</th>
-                <th className="px-3 py-2 text-left">Vencimento</th>
-                <th className="px-3 py-2 text-right">Valor</th>
-                <th className="px-3 py-2 text-right">Pago</th>
-                <th className="px-3 py-2 text-left">Status</th>
+                <th className="px-3 py-2 text-left whitespace-nowrap">Descrição</th>
+                <th className="px-3 py-2 text-left whitespace-nowrap">Vencimento</th>
+                <th className="px-3 py-2 text-right whitespace-nowrap">Valor</th>
+                <th className="px-3 py-2 text-right whitespace-nowrap">Pago</th>
+                <th className="px-3 py-2 text-left whitespace-nowrap">Status</th>
               </tr>
             </thead>
             <tbody>
               {crRows.slice(0, 10).map((r, i) => (
                 <tr key={i} className="border-t border-border">
-                  <td className="px-3 py-1.5">{r.descricao}{r.numero_parcela ? ` (${r.numero_parcela})` : ''}</td>
-                  <td className="px-3 py-1.5">{fmtDate(r.data_vencimento)}</td>
-                  <td className="px-3 py-1.5 text-right">{fmtBRL(Number(r.valor_original))}</td>
-                  <td className="px-3 py-1.5 text-right">{fmtBRL(Number(r.valor_pago))}</td>
-                  <td className="px-3 py-1.5">{r.status}</td>
+                  <td className="px-3 py-1.5 min-w-[160px]">{r.descricao}{r.numero_parcela ? ` (${r.numero_parcela})` : ''}</td>
+                  <td className="px-3 py-1.5 whitespace-nowrap">{fmtDate(r.data_vencimento)}</td>
+                  <td className="px-3 py-1.5 text-right whitespace-nowrap tabular-nums">{fmtBRL(Number(r.valor_original))}</td>
+                  <td className="px-3 py-1.5 text-right whitespace-nowrap tabular-nums">{fmtBRL(Number(r.valor_pago))}</td>
+                  <td className="px-3 py-1.5 whitespace-nowrap">{r.status}</td>
                 </tr>
               ))}
               {crRows.length === 0 && (
@@ -520,27 +562,27 @@ export function RelatoriosClient({
       {/* CP preview table */}
       <div>
         <h3 className="text-sm font-medium text-text mb-2">Contas a Pagar ({cpRows.length})</h3>
-        <div className="overflow-x-auto rounded border border-border">
+        <div className="overflow-x-auto overscroll-x-contain rounded border border-border">
           <table className="w-full text-xs">
             <thead className="bg-bg-3 text-text-dim">
               <tr>
-                <th className="px-3 py-2 text-left">Descrição</th>
-                <th className="px-3 py-2 text-left">Categoria</th>
-                <th className="px-3 py-2 text-left">Vencimento</th>
-                <th className="px-3 py-2 text-right">Valor</th>
-                <th className="px-3 py-2 text-right">Pago</th>
-                <th className="px-3 py-2 text-left">Status</th>
+                <th className="px-3 py-2 text-left whitespace-nowrap">Descrição</th>
+                <th className="px-3 py-2 text-left whitespace-nowrap">Categoria</th>
+                <th className="px-3 py-2 text-left whitespace-nowrap">Vencimento</th>
+                <th className="px-3 py-2 text-right whitespace-nowrap">Valor</th>
+                <th className="px-3 py-2 text-right whitespace-nowrap">Pago</th>
+                <th className="px-3 py-2 text-left whitespace-nowrap">Status</th>
               </tr>
             </thead>
             <tbody>
               {cpRows.slice(0, 10).map((r, i) => (
                 <tr key={i} className="border-t border-border">
-                  <td className="px-3 py-1.5">{r.descricao}{r.numero_documento ? ` (${r.numero_documento})` : ''}</td>
-                  <td className="px-3 py-1.5">{r.categoria?.replaceAll('_', ' ') ?? '—'}</td>
-                  <td className="px-3 py-1.5">{fmtDate(r.data_vencimento)}</td>
-                  <td className="px-3 py-1.5 text-right">{fmtBRL(Number(r.valor_original))}</td>
-                  <td className="px-3 py-1.5 text-right">{fmtBRL(Number(r.valor_pago))}</td>
-                  <td className="px-3 py-1.5">{r.status}</td>
+                  <td className="px-3 py-1.5 min-w-[160px]">{r.descricao}{r.numero_documento ? ` (${r.numero_documento})` : ''}</td>
+                  <td className="px-3 py-1.5 whitespace-nowrap">{r.categoria?.replaceAll('_', ' ') ?? '—'}</td>
+                  <td className="px-3 py-1.5 whitespace-nowrap">{fmtDate(r.data_vencimento)}</td>
+                  <td className="px-3 py-1.5 text-right whitespace-nowrap tabular-nums">{fmtBRL(Number(r.valor_original))}</td>
+                  <td className="px-3 py-1.5 text-right whitespace-nowrap tabular-nums">{fmtBRL(Number(r.valor_pago))}</td>
+                  <td className="px-3 py-1.5 whitespace-nowrap">{r.status}</td>
                 </tr>
               ))}
               {cpRows.length === 0 && (
@@ -581,42 +623,42 @@ export function RelatoriosClient({
                 style={{ width: `${Math.min(100, progressoPonderado)}%` }}
               />
             </div>
-            <div className="grid grid-cols-3 gap-3 pt-1 border-t border-border">
-              <div>
+            <div className="grid grid-cols-1 gap-1.5 pt-2 border-t border-border sm:grid-cols-3 sm:gap-3 sm:pt-1">
+              <div className="flex items-baseline justify-between gap-2 sm:block">
                 <div className="text-xs text-text-dim">Orçado</div>
-                <div className="text-sm font-semibold text-text">{fmtBRL(totalOrcado)}</div>
+                <div className="text-sm font-semibold text-text tabular-nums">{fmtBRL(totalOrcado)}</div>
               </div>
-              <div>
+              <div className="flex items-baseline justify-between gap-2 sm:block">
                 <div className="text-xs text-text-dim">Comprometido</div>
-                <div className="text-sm font-semibold text-warn">{fmtBRL(totalComprometido)}</div>
+                <div className="text-sm font-semibold text-warn tabular-nums">{fmtBRL(totalComprometido)}</div>
               </div>
-              <div>
+              <div className="flex items-baseline justify-between gap-2 sm:block">
                 <div className="text-xs text-text-dim">Pago</div>
-                <div className="text-sm font-semibold text-success">{fmtBRL(totalPago)}</div>
+                <div className="text-sm font-semibold text-success tabular-nums">{fmtBRL(totalPago)}</div>
               </div>
             </div>
           </div>
 
           {/* Etapas table */}
-          <div className="overflow-x-auto rounded border border-border">
+          <div className="overflow-x-auto overscroll-x-contain rounded border border-border">
             <table className="w-full text-xs">
               <thead className="bg-bg-3 text-text-dim">
                 <tr>
-                  <th className="px-3 py-2 text-left">Marco</th>
-                  <th className="px-3 py-2 text-left">Etapa</th>
-                  <th className="px-3 py-2 text-center">% Físico</th>
-                  <th className="px-3 py-2 text-right">Orçado</th>
-                  <th className="px-3 py-2 text-right">Comprometido</th>
-                  <th className="px-3 py-2 text-left">Status</th>
-                  <th className="px-3 py-2 text-left">Prev. Fim</th>
+                  <th className="px-3 py-2 text-left whitespace-nowrap">Marco</th>
+                  <th className="px-3 py-2 text-left whitespace-nowrap">Etapa</th>
+                  <th className="px-3 py-2 text-center whitespace-nowrap">% Físico</th>
+                  <th className="px-3 py-2 text-right whitespace-nowrap">Orçado</th>
+                  <th className="px-3 py-2 text-right whitespace-nowrap">Comprometido</th>
+                  <th className="px-3 py-2 text-left whitespace-nowrap">Status</th>
+                  <th className="px-3 py-2 text-left whitespace-nowrap">Prev. Fim</th>
                 </tr>
               </thead>
               <tbody>
                 {cronoRows.map((r, i) => (
                   <tr key={i} className="border-t border-border">
-                    <td className="px-3 py-1.5 font-semibold text-primary">{r.marco}</td>
-                    <td className="px-3 py-1.5">{r.etapa.replaceAll('_', ' ')}</td>
-                    <td className="px-3 py-1.5">
+                    <td className="px-3 py-1.5 font-semibold text-primary whitespace-nowrap">{r.marco}</td>
+                    <td className="px-3 py-1.5 min-w-[140px]">{r.etapa.replaceAll('_', ' ')}</td>
+                    <td className="px-3 py-1.5 min-w-[110px]">
                       <div className="flex items-center gap-1.5">
                         <div className="flex-1 h-1.5 rounded-full bg-bg-3 overflow-hidden">
                           <div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, Number(r.percentual_fisico))}%` }} />
@@ -624,9 +666,9 @@ export function RelatoriosClient({
                         <span className="w-8 text-right text-text-dim">{Number(r.percentual_fisico).toFixed(0)}%</span>
                       </div>
                     </td>
-                    <td className="px-3 py-1.5 text-right">{Number(r.custo_orcado) > 0 ? fmtBRL(Number(r.custo_orcado)) : '—'}</td>
-                    <td className="px-3 py-1.5 text-right">{Number(r.custo_comprometido) > 0 ? fmtBRL(Number(r.custo_comprometido)) : '—'}</td>
-                    <td className="px-3 py-1.5">
+                    <td className="px-3 py-1.5 text-right whitespace-nowrap tabular-nums">{Number(r.custo_orcado) > 0 ? fmtBRL(Number(r.custo_orcado)) : '—'}</td>
+                    <td className="px-3 py-1.5 text-right whitespace-nowrap tabular-nums">{Number(r.custo_comprometido) > 0 ? fmtBRL(Number(r.custo_comprometido)) : '—'}</td>
+                    <td className="px-3 py-1.5 whitespace-nowrap">
                       <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${
                         r.status === 'CONCLUIDA' ? 'bg-success/20 text-success' :
                         r.status === 'EM_ANDAMENTO' ? 'bg-info/20 text-info' :
@@ -637,7 +679,7 @@ export function RelatoriosClient({
                         {r.status.replaceAll('_', ' ')}
                       </span>
                     </td>
-                    <td className="px-3 py-1.5">{fmtDate(r.data_fim_prevista)}</td>
+                    <td className="px-3 py-1.5 whitespace-nowrap">{fmtDate(r.data_fim_prevista)}</td>
                   </tr>
                 ))}
               </tbody>

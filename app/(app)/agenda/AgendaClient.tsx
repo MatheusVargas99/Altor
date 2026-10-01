@@ -288,7 +288,7 @@ export function AgendaClient({
           <button
             key={p}
             onClick={() => setFilterPeriodo(p)}
-            className={`rounded px-3 py-1 text-sm border ${
+            className={`min-h-[40px] rounded border px-3 py-1 text-sm md:min-h-0 ${
               filterPeriodo === p
                 ? 'border-primary text-primary bg-primary/10'
                 : 'border-border text-text-dim hover:border-primary/50'
@@ -308,7 +308,7 @@ export function AgendaClient({
       </div>
       <div className="flex flex-wrap gap-2 mb-4">
         <select
-          className="input max-w-xs"
+          className="input min-w-0 flex-1 basis-36 sm:flex-initial sm:basis-auto sm:max-w-xs"
           value={filterTipo}
           onChange={(e) => setFilterTipo(e.target.value as ItemType | 'TODOS')}
         >
@@ -319,7 +319,7 @@ export function AgendaClient({
           <option value="CONTRATO">Contratos</option>
         </select>
         <select
-          className="input max-w-xs"
+          className="input min-w-0 flex-1 basis-36 sm:flex-initial sm:basis-auto sm:max-w-xs"
           value={filterObra}
           onChange={(e) => setFilterObra(e.target.value)}
         >
@@ -330,7 +330,7 @@ export function AgendaClient({
             </option>
           ))}
         </select>
-        <div className="flex-1 flex items-center justify-end">
+        <div className="flex w-full items-center sm:w-auto sm:flex-1 sm:justify-end">
           <span className="text-xs text-text-dim">
             {filtered.length} item(s) · Pendente:{' '}
             <strong className="text-warn">{fmtBRL(totalPendente)}</strong>
@@ -349,7 +349,7 @@ export function AgendaClient({
           <div key={date}>
             <div className="flex items-center gap-2 mb-2">
               <div
-                className={`text-xs font-semibold px-2 py-0.5 rounded ${
+                className={`shrink-0 text-xs font-semibold px-2 py-0.5 rounded ${
                   date < hojeStr
                     ? 'bg-danger/20 text-danger'
                     : date === hojeStr
@@ -369,14 +369,15 @@ export function AgendaClient({
                   key={item.id}
                   className="card flex flex-wrap items-center justify-between gap-2 py-2 px-3"
                 >
-                  <div className="flex items-center gap-2 min-w-0">
+                  {/* Celular: descrição em cima (quebrando linha) e valor/status/ação embaixo */}
+                  <div className="flex min-w-0 flex-1 basis-full items-start gap-2 md:flex-initial md:basis-auto md:items-center">
                     <span
                       className={`text-xs rounded px-2 py-0.5 whitespace-nowrap ${tipoBadge[item.tipo]}`}
                     >
                       {tipoLabel[item.tipo]}
                     </span>
                     <div className="min-w-0">
-                      <div className="text-sm text-text truncate">{item.descricao}</div>
+                      <div className="text-sm text-text break-words md:truncate">{item.descricao}</div>
                       {item.empreendimento_id && (
                         <div className="text-xs text-text-dim">
                           {obraNomes[item.empreendimento_id] ?? ''}
@@ -384,15 +385,15 @@ export function AgendaClient({
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 flex-shrink-0">
-                    <span className="text-sm font-medium text-text">
+                  <div className="flex w-full flex-wrap items-center justify-end gap-x-3 gap-y-2 md:w-auto md:flex-shrink-0 md:flex-nowrap">
+                    <span className="mr-auto text-sm font-medium text-text md:mr-0">
                       {fmtBRL(item.valor)}
                     </span>
                     <span className={`text-xs rounded px-2 py-0.5 ${statusBadge(item.status)}`}>
                       {item.status.replaceAll('_', ' ')}
                     </span>
                     <button
-                      className="text-xs text-info hover:underline whitespace-nowrap"
+                      className="min-h-[40px] whitespace-nowrap rounded-md border border-info/40 px-3 text-sm text-info hover:underline md:min-h-0 md:border-0 md:px-0 md:text-xs"
                       disabled={isPending}
                       onClick={() => openStatusModal(item)}
                     >
@@ -415,7 +416,7 @@ export function AgendaClient({
         <div className="space-y-4">
           {statusModal && (
             <div className="text-sm text-text-dim">
-              <strong className="text-text">{statusModal.descricao}</strong>
+              <strong className="break-words text-text">{statusModal.descricao}</strong>
               <div className="mt-0.5">
                 {fmtBRL(statusModal.valor)} · venc. {fmtDate(statusModal.data)}
               </div>
@@ -447,17 +448,17 @@ export function AgendaClient({
                 />
               </div>
             )}
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <button
               type="button"
-              className="btn-ghost"
+              className="btn-ghost w-full sm:w-auto"
               onClick={() => setStatusModal(null)}
             >
               Cancelar
             </button>
             <button
               type="button"
-              className="btn-primary"
+              className="btn-primary w-full sm:w-auto"
               disabled={isPending || newStatus === statusModal?.status}
               onClick={onSaveStatus}
             >

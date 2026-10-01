@@ -156,7 +156,7 @@ export function ContratosClient({
 
       <div className="flex flex-wrap gap-2 mb-3">
         <select
-          className="input max-w-xs"
+          className="input w-full sm:w-auto sm:max-w-xs"
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value as ContratoStatus | 'TODOS')}
         >
@@ -177,9 +177,9 @@ export function ContratosClient({
             key: 'acoes',
             header: '',
             cell: (r) => (
-              <div className="flex justify-end gap-2 text-xs">
+              <div className="flex flex-wrap justify-end gap-2 text-xs">
                 <button
-                  className="text-warn hover:underline"
+                  className="min-h-[40px] text-warn hover:underline md:min-h-0"
                   onClick={() => {
                     setNewStatus(r.status);
                     setStatusModal(r);
@@ -188,7 +188,7 @@ export function ContratosClient({
                   Status
                 </button>
                 <button
-                  className="text-info hover:underline"
+                  className="min-h-[40px] text-info hover:underline md:min-h-0"
                   onClick={() => {
                     setEditing(r);
                     setOpen(true);
@@ -198,7 +198,7 @@ export function ContratosClient({
                 </button>
                 <button
                   disabled={isPending}
-                  className="text-danger hover:underline disabled:opacity-50"
+                  className="min-h-[40px] text-danger hover:underline disabled:opacity-50 md:min-h-0"
                   onClick={() => onDelete(r)}
                 >
                   Excluir
@@ -221,7 +221,7 @@ export function ContratosClient({
         <div className="space-y-4">
           <div>
             <div className="text-sm text-text-dim mb-1">
-              Contrato: <strong className="text-text">{statusModal?.numero}</strong>
+              Contrato: <strong className="break-words text-text">{statusModal?.numero}</strong>
             </div>
           </div>
           <div>
@@ -238,17 +238,17 @@ export function ContratosClient({
               <option value="INADIMPLENTE">Inadimplente</option>
             </select>
           </div>
-          <div className="flex justify-end gap-2">
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <button
               type="button"
-              className="btn-ghost"
+              className="btn-ghost w-full sm:w-auto"
               onClick={() => setStatusModal(null)}
             >
               Cancelar
             </button>
             <button
               type="button"
-              className="btn-primary"
+              className="btn-primary w-full sm:w-auto"
               disabled={isPending}
               onClick={onStatusSave}
             >

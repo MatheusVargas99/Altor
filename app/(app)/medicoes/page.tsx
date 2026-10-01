@@ -19,7 +19,7 @@ export default async function MedicoesPage() {
   ]);
 
   return (
-    <div className="p-6">
+    <div className="p-4 md:p-6">
       <MedicoesClient
         initial={(data as Medicao[]) ?? []}
         empreendimentos={(empreend as Pick<Empreendimento, 'id' | 'nome' | 'codigo_curto'>[]) ?? []}

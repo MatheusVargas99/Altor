@@ -59,7 +59,7 @@ export function MedicaoForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Empreendimento *" error={errors.empreendimento_id?.message}>
           <Select
             {...register('empreendimento_id')}
@@ -93,14 +93,14 @@ export function MedicaoForm({
         </Field>
 
         <Field label="Valor orçado (R$) *" error={errors.valor_orcado?.message}>
-          <Input type="number" step="0.01" {...register('valor_orcado')} />
+          <Input type="number" inputMode="decimal" step="0.01" {...register('valor_orcado')} />
         </Field>
         <Field label="Valor medição (R$) *" error={errors.valor_medicao?.message}>
-          <Input type="number" step="0.01" {...register('valor_medicao')} />
+          <Input type="number" inputMode="decimal" step="0.01" {...register('valor_medicao')} />
         </Field>
 
         <Field label="% Medição">
-          <Input type="number" step="0.01" max={100} {...register('percentual_medicao')} />
+          <Input type="number" inputMode="decimal" step="0.01" max={100} {...register('percentual_medicao')} />
         </Field>
         <Field label="Data medição">
           <Input type="date" {...register('data_medicao')} />
@@ -115,11 +115,11 @@ export function MedicaoForm({
         <Textarea rows={2} {...register('observacoes')} />
       </Field>
 
-      <div className="flex justify-end gap-2 pt-2">
-        <button type="button" className="btn-ghost" onClick={onCancel}>
+      <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
+        <button type="button" className="btn-ghost w-full sm:w-auto" onClick={onCancel}>
           Cancelar
         </button>
-        <button type="submit" className="btn-primary" disabled={isPending}>
+        <button type="submit" className="btn-primary w-full sm:w-auto" disabled={isPending}>
           {isPending ? 'Salvando…' : medicao ? 'Salvar' : 'Criar medição'}
         </button>
       </div>

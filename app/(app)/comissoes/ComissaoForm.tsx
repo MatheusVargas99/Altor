@@ -143,7 +143,7 @@ export function ComissaoForm({
       })}
       className="space-y-4"
     >
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Field label="Beneficiário (nome) *" error={errors.beneficiario_nome?.message}>
           <Input {...register('beneficiario_nome')} />
         </Field>
@@ -186,14 +186,14 @@ export function ComissaoForm({
         </Field>
 
         <Field label="Valor da venda (R$) *" error={errors.valor_venda?.message}>
-          <Input type="number" step="0.01" {...register('valor_venda')} />
+          <Input type="number" step="0.01" inputMode="decimal" {...register('valor_venda')} />
         </Field>
         <Field label="Percentual (%)" error={errors.percentual?.message}>
-          <Input type="number" step="0.001" {...register('percentual')} />
+          <Input type="number" step="0.001" inputMode="decimal" {...register('percentual')} />
         </Field>
 
         <Field label="Valor da parcela (R$) *" error={errors.valor_parcela?.message}>
-          <Input type="number" step="0.01" {...register('valor_parcela')} />
+          <Input type="number" step="0.01" inputMode="decimal" {...register('valor_parcela')} />
         </Field>
         <Field label="Parcela" hint="ex.: 3/12">
           <Input {...register('parcela')} />
@@ -217,21 +217,22 @@ export function ComissaoForm({
 
       {!comissao && (
         <div className="border-t border-border pt-3">
-          <label className="inline-flex items-center gap-2 text-sm">
+          <label className="inline-flex min-h-[44px] items-center gap-2 text-sm md:min-h-0">
             <input
               type="checkbox"
+              className="h-5 w-5 md:h-4 md:w-4"
               checked={parcelar}
               onChange={(e) => setParcelar(e.target.checked)}
             />
             Criar parcelado (gera N comissões)
           </label>
           {parcelar && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-3">
               <Field
                 label="Qtd parcelas (2–240)"
                 error={errsParc.qtd_parcelas?.message}
               >
-                <Input type="number" min={2} max={240} {...regParc('qtd_parcelas')} />
+                <Input type="number" inputMode="numeric" min={2} max={240} {...regParc('qtd_parcelas')} />
               </Field>
               <Field label="Periodicidade" error={errsParc.periodicidade?.message}>
                 <Select {...regParc('periodicidade')} options={periodOpts} />
@@ -242,7 +243,7 @@ export function ComissaoForm({
               >
                 <Input type="date" {...regParc('primeiro_vencimento')} />
               </Field>
-              <p className="md:col-span-3 text-xs text-text-dim">
+              <p className="sm:col-span-3 text-xs text-text-dim">
                 O valor da parcela acima será dividido em N comissões. A última recebe o ajuste de centavos.
               </p>
             </div>
@@ -250,11 +251,11 @@ export function ComissaoForm({
         </div>
       )}
 
-      <div className="flex justify-end gap-2 pt-2">
-        <button type="button" className="btn-ghost" onClick={onCancel}>
+      <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
+        <button type="button" className="btn-ghost w-full sm:w-auto" onClick={onCancel}>
           Cancelar
         </button>
-        <button type="submit" className="btn-primary" disabled={isPending}>
+        <button type="submit" className="btn-primary w-full sm:w-auto" disabled={isPending}>
           {isPending
             ? 'Salvando…'
             : parcelar

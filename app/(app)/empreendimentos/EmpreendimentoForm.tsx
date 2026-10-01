@@ -76,7 +76,7 @@ export function EmpreendimentoForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Nome *" error={errors.nome?.message}>
           <Input {...register('nome')} />
         </Field>
@@ -99,22 +99,22 @@ export function EmpreendimentoForm({
         </Field>
 
         <Field label="Área terreno (m²)">
-          <Input type="number" step="0.01" {...register('area_terreno')} />
+          <Input type="number" inputMode="decimal" step="0.01" {...register('area_terreno')} />
         </Field>
         <Field label="Área construída (m²)">
-          <Input type="number" step="0.01" {...register('area_construida')} />
+          <Input type="number" inputMode="decimal" step="0.01" {...register('area_construida')} />
         </Field>
 
         <Field label="Nº unidades">
-          <Input type="number" {...register('n_unidades')} />
+          <Input type="number" inputMode="numeric" {...register('n_unidades')} />
         </Field>
         <Field label="VGV estimado (R$)">
-          <Input type="number" step="0.01" {...register('vgv_estimado')} />
+          <Input type="number" inputMode="decimal" step="0.01" {...register('vgv_estimado')} />
         </Field>
 
-        <div className="md:col-span-2">
+        <div className="sm:col-span-2">
           <Field label="Custo total estimado (R$)">
-            <Input type="number" step="0.01" {...register('custo_total_estimado')} />
+            <Input type="number" inputMode="decimal" step="0.01" {...register('custo_total_estimado')} />
           </Field>
         </div>
 
@@ -137,11 +137,11 @@ export function EmpreendimentoForm({
         <Textarea rows={3} {...register('observacoes')} />
       </Field>
 
-      <div className="flex justify-end gap-2 pt-2">
-        <button type="button" className="btn-ghost" onClick={onCancel}>
+      <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
+        <button type="button" className="btn-ghost w-full sm:w-auto" onClick={onCancel}>
           Cancelar
         </button>
-        <button type="submit" className="btn-primary" disabled={isPending}>
+        <button type="submit" className="btn-primary w-full sm:w-auto" disabled={isPending}>
           {isPending
             ? 'Salvando…'
             : empreendimento

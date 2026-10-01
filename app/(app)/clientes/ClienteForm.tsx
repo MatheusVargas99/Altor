@@ -53,9 +53,9 @@ export function ClienteForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Field label="Nome completo *" error={errors.nome_completo?.message}>
-          <Input {...register('nome_completo')} />
+          <Input autoComplete="name" autoCapitalize="words" {...register('nome_completo')} />
         </Field>
         <Field label="Tipo">
           <Select
@@ -69,14 +69,14 @@ export function ClienteForm({
         </Field>
 
         <Field label="CPF / CNPJ" error={errors.cpf_cnpj?.message}>
-          <Input {...register('cpf_cnpj')} />
+          <Input inputMode="numeric" autoComplete="off" {...register('cpf_cnpj')} />
         </Field>
         <Field label="RG" error={errors.rg?.message}>
-          <Input {...register('rg')} />
+          <Input autoComplete="off" autoCapitalize="characters" {...register('rg')} />
         </Field>
 
         <Field label="Data nascimento" error={errors.data_nascimento?.message}>
-          <Input type="date" {...register('data_nascimento')} />
+          <Input type="date" autoComplete="bday" {...register('data_nascimento')} />
         </Field>
         <Field label="Estado civil">
           <Input {...register('estado_civil')} />
@@ -111,21 +111,35 @@ export function ClienteForm({
         </Field>
 
         <Field label="E-mail" error={errors.email?.message}>
-          <Input type="email" {...register('email')} />
+          <Input
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            {...register('email')}
+          />
         </Field>
         <Field label="Telefone" error={errors.telefone?.message}>
-          <Input {...register('telefone')} />
+          <Input type="tel" inputMode="tel" autoComplete="tel" {...register('telefone')} />
         </Field>
 
         <Field label="Endereço">
-          <Input {...register('endereco')} />
+          <Input autoComplete="street-address" {...register('endereco')} />
         </Field>
         <Field label="Cidade">
-          <Input {...register('cidade')} />
+          <Input autoComplete="address-level2" {...register('cidade')} />
         </Field>
 
         <Field label="UF" hint="2 letras">
-          <Input maxLength={2} {...register('uf')} />
+          <Input
+            maxLength={2}
+            autoComplete="address-level1"
+            autoCapitalize="characters"
+            autoCorrect="off"
+            {...register('uf')}
+          />
         </Field>
       </div>
 
@@ -133,11 +147,11 @@ export function ClienteForm({
         <Textarea rows={3} {...register('observacoes')} />
       </Field>
 
-      <div className="flex justify-end gap-2 pt-2">
-        <button type="button" className="btn-ghost" onClick={onCancel}>
+      <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
+        <button type="button" className="btn-ghost w-full sm:w-auto" onClick={onCancel}>
           Cancelar
         </button>
-        <button type="submit" className="btn-primary" disabled={isPending}>
+        <button type="submit" className="btn-primary w-full sm:w-auto" disabled={isPending}>
           {isPending ? 'Salvando…' : cliente ? 'Salvar' : 'Criar cliente'}
         </button>
       </div>

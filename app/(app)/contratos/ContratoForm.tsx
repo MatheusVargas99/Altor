@@ -65,9 +65,9 @@ export function ContratoForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Field label="Nº contrato *" error={errors.numero?.message}>
-          <Input {...register('numero')} />
+          <Input autoComplete="off" autoCorrect="off" {...register('numero')} />
         </Field>
         <Field label="Tipo">
           <Select {...register('tipo')} options={tipoOpts} placeholder="Selecione…" />
@@ -107,7 +107,7 @@ export function ContratoForm({
           hint="Necessário sempre"
           error={errors.parte_nome?.message}
         >
-          <Input {...register('parte_nome')} />
+          <Input autoComplete="off" autoCapitalize="words" {...register('parte_nome')} />
         </Field>
         <Field label="Tipo de parte">
           <Select
@@ -124,7 +124,7 @@ export function ContratoForm({
           <Input type="number" step="0.01" {...register('valor_total')} />
         </Field>
         <Field label="Forma de pagamento">
-          <Input {...register('forma_pagamento')} />
+          <Input autoComplete="off" {...register('forma_pagamento')} />
         </Field>
 
         <Field label="Data assinatura">
@@ -138,7 +138,15 @@ export function ContratoForm({
           <Input type="date" {...register('data_vigencia_fim')} />
         </Field>
         <Field label="Arquivo (URL)">
-          <Input {...register('arquivo_url')} />
+          <Input
+            inputMode="url"
+            autoComplete="url"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            placeholder="https://…"
+            {...register('arquivo_url')}
+          />
         </Field>
       </div>
 
@@ -149,11 +157,11 @@ export function ContratoForm({
         <Textarea rows={2} {...register('observacoes')} />
       </Field>
 
-      <div className="flex justify-end gap-2 pt-2">
-        <button type="button" className="btn-ghost" onClick={onCancel}>
+      <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
+        <button type="button" className="btn-ghost w-full sm:w-auto" onClick={onCancel}>
           Cancelar
         </button>
-        <button type="submit" className="btn-primary" disabled={isPending}>
+        <button type="submit" className="btn-primary w-full sm:w-auto" disabled={isPending}>
           {isPending ? 'Salvando…' : contrato ? 'Salvar' : 'Criar contrato'}
         </button>
       </div>

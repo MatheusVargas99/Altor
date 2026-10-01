@@ -21,7 +21,7 @@
     @apply inline-flex items-center justify-center rounded-md border border-border px-4 py-2 text-sm font-medium text-text hover:bg-bg-2 transition;
   }
   .input {
-    @apply w-full rounded-md border border-border bg-bg-2 px-3 py-2 text-sm text-text placeholder:text-text-dim focus:outline-none focus:ring-2 focus:ring-primary;
+    @apply w-full rounded-md border border-border bg-bg-2 px-3 py-2 text-base md:text-sm text-text placeholder:text-text-dim focus:outline-none focus:ring-2 focus:ring-primary;
   }
   .card {
     @apply rounded-lg border border-border bg-bg-2 p-4 shadow-sm;
@@ -37,5 +37,61 @@
     filter: blur(9px);
     user-select: none;
     pointer-events: none;
+  }
+}
+
+/* ── Celular (Android / iOS) ─────────────────────────────────────────────── */
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    overflow-x: hidden;
+  }
+}
+
+@layer components {
+  /* iOS dá zoom ao focar campos com fonte < 16px — no celular os campos usam 16px */
+  .input {
+    min-height: 2.75rem;
+  }
+  @screen md {
+    .input {
+      min-height: 0;
+    }
+  }
+  textarea.input {
+    min-height: 0;
+  }
+  /* Safari iOS: date/time sem altura e com texto centralizado */
+  .input[type='date'],
+  .input[type='time'],
+  .input[type='datetime-local'],
+  .input[type='month'] {
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
+  }
+  .input::-webkit-date-and-time-value {
+    text-align: left;
+    min-height: 1.5em;
+  }
+  .input[type='search']::-webkit-search-decoration {
+    -webkit-appearance: none;
+  }
+  /* Alvos de toque de pelo menos 44px no celular */
+  .btn-primary,
+  .btn-ghost {
+    @apply min-h-[44px] md:min-h-0;
+  }
+  /* Ações dos cartões da DataTable: botões maiores e espaçados */
+  .dt-card-acoes > div {
+    @apply flex-wrap justify-end gap-1;
+  }
+  .dt-card-acoes button,
+  .dt-card-acoes a {
+    @apply inline-flex min-h-[40px] items-center rounded-md border border-border px-3 py-2 text-sm no-underline;
   }
 }

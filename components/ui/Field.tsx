@@ -12,11 +12,11 @@ export const Field = ({
   error,
   children,
 }: CommonProps & { children: React.ReactNode }) => (
-  <div className="space-y-1">
+  <div className="min-w-0 space-y-1">
     {label && <label className="label">{label}</label>}
     {children}
-    {hint && !error && <p className="text-xs text-text-dim">{hint}</p>}
-    {error && <p className="text-xs text-danger">{error}</p>}
+    {hint && !error && <p className="text-xs text-text-dim break-words">{hint}</p>}
+    {error && <p role="alert" className="text-xs text-danger break-words">{error}</p>}
   </div>
 );
 

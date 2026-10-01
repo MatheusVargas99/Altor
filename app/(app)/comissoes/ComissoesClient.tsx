@@ -84,12 +84,6 @@ export function ComissoesClient({
 
   const columns: Column<Comissao>[] = [
     {
-      key: 'data_prevista',
-      header: 'Data prevista',
-      cell: (r) => (r.data_prevista ? fmtDate(r.data_prevista) : '—'),
-      sortAccessor: (r) => r.data_prevista ?? '',
-    },
-    {
       key: 'beneficiario',
       header: 'Beneficiário',
       cell: (r) => (
@@ -104,6 +98,12 @@ export function ComissoesClient({
       ),
       searchAccessor: (r) =>
         `${r.beneficiario_nome} ${r.beneficiario_tipo ?? ''}`,
+    },
+    {
+      key: 'data_prevista',
+      header: 'Data prevista',
+      cell: (r) => (r.data_prevista ? fmtDate(r.data_prevista) : '—'),
+      sortAccessor: (r) => r.data_prevista ?? '',
     },
     {
       key: 'obra',
@@ -131,7 +131,7 @@ export function ComissoesClient({
       header: 'Valor',
       cell: (r) => fmtBRL(r.valor_parcela),
       sortAccessor: (r) => r.valor_parcela,
-      className: 'text-right',
+      className: 'text-right whitespace-nowrap tabular-nums',
     },
     {
       key: 'status',
@@ -193,30 +193,30 @@ export function ComissoesClient({
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-        <div className="card">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-4">
+        <div className="card col-span-2 min-w-0 p-3 sm:col-span-1 sm:p-4">
           <div className="text-xs uppercase text-text-dim">Total previsto</div>
-          <div className="text-xl font-semibold text-warn mt-1">
+          <div className="text-base sm:text-xl font-semibold tabular-nums break-words text-warn mt-1">
             {fmtBRL(totals.previsto)}
           </div>
         </div>
-        <div className="card">
+        <div className="card min-w-0 p-3 sm:p-4">
           <div className="text-xs uppercase text-text-dim">Pago</div>
-          <div className="text-xl font-semibold text-success mt-1">
+          <div className="text-base sm:text-xl font-semibold tabular-nums break-words text-success mt-1">
             {fmtBRL(totals.pago)}
           </div>
         </div>
-        <div className="card">
+        <div className="card min-w-0 p-3 sm:p-4">
           <div className="text-xs uppercase text-text-dim">Retido</div>
-          <div className="text-xl font-semibold text-text-dim mt-1">
+          <div className="text-base sm:text-xl font-semibold tabular-nums break-words text-text-dim mt-1">
             {fmtBRL(totals.retido)}
           </div>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-3">
+      <div className="grid grid-cols-2 gap-2 mb-3 sm:flex sm:flex-wrap">
         <select
-          className="input max-w-xs"
+          className="input min-w-0 sm:max-w-xs"
           value={filterStatus}
           onChange={(e) =>
             setFilterStatus(e.target.value as ComissaoStatus | 'TODOS')
@@ -230,7 +230,7 @@ export function ComissoesClient({
           <option value="CANCELADA">Cancelada</option>
         </select>
         <select
-          className="input max-w-xs"
+          className="input min-w-0 sm:max-w-xs"
           value={filterObra}
           onChange={(e) => setFilterObra(e.target.value)}
         >

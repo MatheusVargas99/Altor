@@ -61,7 +61,7 @@ export default async function CronogramaPage({
     ) / 100;
 
   return (
-    <div className="p-6 space-y-5">
+    <div className="p-4 md:p-6 space-y-5">
       <PageHeader
         title="Cronograma físico-financeiro"
         description="EAP padrão criada automaticamente por empreendimento. Selecione a obra."
@@ -72,7 +72,7 @@ export default async function CronogramaPage({
           <Link
             key={o.id}
             href={`/cronograma?obra=${o.id}`}
-            className={`rounded px-3 py-1 text-sm border ${
+            className={`flex min-h-[40px] max-w-full items-center break-words rounded border px-3 py-2 text-sm md:min-h-0 md:py-1 ${
               o.id === obraId
                 ? 'border-primary text-primary'
                 : 'border-border text-text-dim hover:border-primary/50'
@@ -94,28 +94,28 @@ export default async function CronogramaPage({
 
       {obraId && (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-            <div className="card">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+            <div className="card min-w-0 p-3 sm:p-4">
               <div className="text-xs uppercase text-text-dim">Orçado</div>
-              <div className="text-xl font-semibold text-text mt-1">
+              <div className="mt-1 break-words text-base font-semibold text-text sm:text-xl">
                 {fmtBRL(totalOrcado)}
               </div>
             </div>
-            <div className="card">
+            <div className="card min-w-0 p-3 sm:p-4">
               <div className="text-xs uppercase text-text-dim">Comprometido</div>
-              <div className="text-xl font-semibold text-info mt-1">
+              <div className="mt-1 break-words text-base font-semibold text-info sm:text-xl">
                 {fmtBRL(totalComprometido)}
               </div>
             </div>
-            <div className="card">
+            <div className="card min-w-0 p-3 sm:p-4">
               <div className="text-xs uppercase text-text-dim">Pago</div>
-              <div className="text-xl font-semibold text-success mt-1">
+              <div className="mt-1 break-words text-base font-semibold text-success sm:text-xl">
                 {fmtBRL(totalPago)}
               </div>
             </div>
-            <div className="card">
+            <div className="card min-w-0 p-3 sm:p-4">
               <div className="text-xs uppercase text-text-dim">Avanço físico</div>
-              <div className="text-xl font-semibold text-primary mt-1">
+              <div className="mt-1 break-words text-base font-semibold text-primary sm:text-xl">
                 {pctFisico.toFixed(1)}%
               </div>
             </div>

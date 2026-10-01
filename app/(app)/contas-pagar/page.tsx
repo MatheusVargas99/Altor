@@ -17,7 +17,7 @@ export default async function CPPage() {
     ]);
 
   return (
-    <div className="p-6">
+    <div className="p-4 md:p-6">
       <ContasPagarClient
         initial={(contas as ContaPagar[]) ?? []}
         empreendimentos={(empreend as Pick<Empreendimento, 'id' | 'nome' | 'codigo_curto'>[]) ?? []}

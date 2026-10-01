@@ -92,15 +92,91 @@ export function UsuariosClient({ profiles, currentUserId }: { profiles: Profile[
     });
   };
 
+  const abrirEditar = (p: Profile) => {
+    setEditTarget(p);
+    setEditForm({ nome: p.nome, role: p.role, ativo: p.ativo });
+  };
+  const abrirSenha = (p: Profile) => {
+    setPwTarget(p);
+    setPwForm({ senha: '', confirma: '' });
+  };
+
+  const roleBadge = (p: Profile) => (
+    <span className={`rounded px-2 py-0.5 text-xs ${p.role === 'ADMIN' ? 'bg-primary/20 text-primary' : 'bg-bg-3 text-text-dim'}`}>
+      {p.role === 'ADMIN' ? 'Administrador' : 'Operacional'}
+    </span>
+  );
+  const ativoBadge = (p: Profile) => (
+    <span className={`rounded px-2 py-0.5 text-xs ${p.ativo ? 'bg-success/20 text-success' : 'bg-danger/20 text-danger'}`}>
+      {p.ativo ? 'Ativo' : 'Inativo'}
+    </span>
+  );
+
+  // No celular as ações viram botões com borda e ≥ 40px de altura
+  const acaoCls =
+    'min-h-[40px] rounded-md border border-border px-3 text-sm hover:underline disabled:opacity-50 md:min-h-0 md:border-0 md:px-0 md:text-xs';
+  const acoes = (p: Profile) => (
+    <div className="flex flex-wrap justify-end gap-2 md:flex-nowrap">
+      <button type="button" className={`${acaoCls} text-info`} onClick={() => abrirEditar(p)}>
+        Editar
+      </button>
+      <button type="button" className={`${acaoCls} text-warn`} onClick={() => abrirSenha(p)}>
+        Senha
+      </button>
+      {p.id !== currentUserId && (
+        <button
+          type="button"
+          className={`${acaoCls} text-danger`}
+          disabled={isPending}
+          onClick={() => onExcluir(p)}
+        >
+          Excluir
+        </button>
+      )}
+    </div>
+  );
+
+  const rodape = 'flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end';
+
   return (
     <>
-      <div className="flex justify-end mb-4">
-        <button className="btn-primary" onClick={() => { setForm(emptyForm); setCreateOpen(true); }}>
+      <div className="mb-4 flex justify-end">
+        <button
+          type="button"
+          className="btn-primary w-full sm:w-auto"
+          onClick={() => { setForm(emptyForm); setCreateOpen(true); }}
+        >
           + Novo usuário
         </button>
       </div>
 
-      <div className="card overflow-x-auto">
+      {/* Celular: um cartão por usuário */}
+      <div className="space-y-2 md:hidden">
+        {profiles.length === 0 && (
+          <div className="rounded-lg border border-border px-3 py-6 text-center text-sm text-text-dim">
+            Nenhum usuário encontrado.
+          </div>
+        )}
+        {profiles.map((p) => (
+          <div key={p.id} className="rounded-lg border border-border bg-bg-2 p-3 text-sm">
+            <div className="mb-2 break-words font-medium text-text">
+              {p.nome}
+              {p.id === currentUserId && <span className="ml-2 text-xs text-primary">(você)</span>}
+            </div>
+            <dl className="grid grid-cols-[auto,1fr] gap-x-3 gap-y-1.5">
+              <dt className="pt-0.5 text-xs text-text-dim">Perfil</dt>
+              <dd className="text-right">{roleBadge(p)}</dd>
+              <dt className="pt-0.5 text-xs text-text-dim">Status</dt>
+              <dd className="text-right">{ativoBadge(p)}</dd>
+              <dt className="pt-0.5 text-xs text-text-dim">Último acesso</dt>
+              <dd className="text-right text-xs text-text-dim">{fmtDate(p.ultimo_login)}</dd>
+            </dl>
+            <div className="mt-2 border-t border-border pt-2">{acoes(p)}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="card hidden overflow-x-auto md:block">
         <table className="w-full text-sm">
           <thead className="bg-bg-3 text-text-dim">
             <tr>
@@ -121,40 +197,11 @@ export function UsuariosClient({ profiles, currentUserId }: { profiles: Profile[
                     <span className="ml-2 text-xs text-primary">(você)</span>
                   )}
                 </td>
-                <td className="px-4 py-2 text-text-dim text-xs">{p.id}</td>
-                <td className="px-4 py-2">
-                  <span className={`rounded px-2 py-0.5 text-xs ${p.role === 'ADMIN' ? 'bg-primary/20 text-primary' : 'bg-bg-3 text-text-dim'}`}>
-                    {p.role === 'ADMIN' ? 'Administrador' : 'Operacional'}
-                  </span>
-                </td>
-                <td className="px-4 py-2">
-                  <span className={`rounded px-2 py-0.5 text-xs ${p.ativo ? 'bg-success/20 text-success' : 'bg-danger/20 text-danger'}`}>
-                    {p.ativo ? 'Ativo' : 'Inativo'}
-                  </span>
-                </td>
-                <td className="px-4 py-2 text-xs text-text-dim">{fmtDate(p.ultimo_login)}</td>
-                <td className="px-4 py-2 text-right text-xs whitespace-nowrap space-x-2">
-                  <button
-                    className="text-info hover:underline"
-                    onClick={() => {
-                      setEditTarget(p);
-                      setEditForm({ nome: p.nome, role: p.role, ativo: p.ativo });
-                    }}
-                  >
-                    Editar
-                  </button>
-                  <button
-                    className="text-warn hover:underline"
-                    onClick={() => { setPwTarget(p); setPwForm({ senha: '', confirma: '' }); }}
-                  >
-                    Senha
-                  </button>
-                  {p.id !== currentUserId && (
-                    <button className="text-danger hover:underline" disabled={isPending} onClick={() => onExcluir(p)}>
-                      Excluir
-                    </button>
-                  )}
-                </td>
+                <td className="px-4 py-2 text-text-dim text-xs break-all">{p.id}</td>
+                <td className="px-4 py-2 whitespace-nowrap">{roleBadge(p)}</td>
+                <td className="px-4 py-2 whitespace-nowrap">{ativoBadge(p)}</td>
+                <td className="px-4 py-2 text-xs text-text-dim whitespace-nowrap">{fmtDate(p.ultimo_login)}</td>
+                <td className="px-4 py-2 text-right whitespace-nowrap">{acoes(p)}</td>
               </tr>
             ))}
             {profiles.length === 0 && (
@@ -166,85 +213,154 @@ export function UsuariosClient({ profiles, currentUserId }: { profiles: Profile[
         </table>
       </div>
 
-      {/* Modal: Criar usuário */}
+      {/* Modais usam <form> para a tecla "Ir/Concluído" do teclado do celular enviar; noValidate mantém as mensagens via toast */}
       <Modal open={createOpen} onClose={() => setCreateOpen(false)} title="Novo usuário" size="md">
-        <div className="space-y-4">
+        <form noValidate className="space-y-4" onSubmit={(e) => { e.preventDefault(); onCriar(); }}>
           <div>
-            <label className="label">Nome completo</label>
-            <input className="input" value={form.nome} onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value }))} placeholder="Ex: João da Silva" />
+            <label className="label" htmlFor="novo-nome">Nome completo</label>
+            <input
+              id="novo-nome"
+              className="input"
+              autoComplete="off"
+              autoCapitalize="words"
+              enterKeyHint="next"
+              value={form.nome}
+              onChange={(e) => setForm((f) => ({ ...f, nome: e.target.value }))}
+              placeholder="Ex: João da Silva"
+            />
           </div>
           <div>
-            <label className="label">E-mail</label>
-            <input className="input" type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} placeholder="joao@exemplo.com" />
+            <label className="label" htmlFor="novo-email">E-mail</label>
+            <input
+              id="novo-email"
+              className="input"
+              type="email"
+              inputMode="email"
+              autoComplete="off"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              enterKeyHint="next"
+              value={form.email}
+              onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+              placeholder="joao@exemplo.com"
+            />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className="label">Senha</label>
-              <input className="input" type="password" value={form.senha} onChange={(e) => setForm((f) => ({ ...f, senha: e.target.value }))} placeholder="Mínimo 6 caracteres" />
+              <label className="label" htmlFor="novo-senha">Senha</label>
+              {/* new-password impede o navegador de preencher a senha do próprio admin */}
+              <input
+                id="novo-senha"
+                className="input"
+                type="password"
+                autoComplete="new-password"
+                enterKeyHint="next"
+                value={form.senha}
+                onChange={(e) => setForm((f) => ({ ...f, senha: e.target.value }))}
+                placeholder="Mínimo 6 caracteres"
+              />
             </div>
             <div>
-              <label className="label">Confirmar senha</label>
-              <input className="input" type="password" value={form.confirma} onChange={(e) => setForm((f) => ({ ...f, confirma: e.target.value }))} />
+              <label className="label" htmlFor="novo-confirma">Confirmar senha</label>
+              <input
+                id="novo-confirma"
+                className="input"
+                type="password"
+                autoComplete="new-password"
+                enterKeyHint="done"
+                value={form.confirma}
+                onChange={(e) => setForm((f) => ({ ...f, confirma: e.target.value }))}
+              />
             </div>
           </div>
           <div>
-            <label className="label">Perfil de acesso</label>
-            <select className="input" value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as UserRole }))}>
+            <label className="label" htmlFor="novo-role">Perfil de acesso</label>
+            <select id="novo-role" className="input" value={form.role} onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as UserRole }))}>
               <option value="OPERACIONAL">Operacional — acesso geral, sem gestão de usuários</option>
               <option value="ADMIN">Administrador — acesso total</option>
             </select>
           </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <button className="btn-ghost" onClick={() => setCreateOpen(false)}>Cancelar</button>
-            <button className="btn-primary" disabled={isPending} onClick={onCriar}>Criar usuário</button>
+          <div className={rodape}>
+            <button type="button" className="btn-ghost w-full sm:w-auto" onClick={() => setCreateOpen(false)}>Cancelar</button>
+            <button type="submit" className="btn-primary w-full sm:w-auto" disabled={isPending}>
+              {isPending ? 'Criando…' : 'Criar usuário'}
+            </button>
           </div>
-        </div>
+        </form>
       </Modal>
 
-      {/* Modal: Editar usuário */}
       <Modal open={!!editTarget} onClose={() => setEditTarget(null)} title={`Editar: ${editTarget?.nome}`} size="sm">
-        <div className="space-y-4">
+        <form noValidate className="space-y-4" onSubmit={(e) => { e.preventDefault(); onEditar(); }}>
           <div>
-            <label className="label">Nome</label>
-            <input className="input" value={editForm.nome} onChange={(e) => setEditForm((f) => ({ ...f, nome: e.target.value }))} />
+            <label className="label" htmlFor="edit-nome">Nome</label>
+            <input
+              id="edit-nome"
+              className="input"
+              autoComplete="off"
+              autoCapitalize="words"
+              enterKeyHint="done"
+              value={editForm.nome}
+              onChange={(e) => setEditForm((f) => ({ ...f, nome: e.target.value }))}
+            />
           </div>
           <div>
-            <label className="label">Perfil de acesso</label>
-            <select className="input" value={editForm.role} onChange={(e) => setEditForm((f) => ({ ...f, role: e.target.value as UserRole }))}>
+            <label className="label" htmlFor="edit-role">Perfil de acesso</label>
+            <select id="edit-role" className="input" value={editForm.role} onChange={(e) => setEditForm((f) => ({ ...f, role: e.target.value as UserRole }))}>
               <option value="OPERACIONAL">Operacional</option>
               <option value="ADMIN">Administrador</option>
             </select>
           </div>
           <div>
-            <label className="label">Status</label>
-            <select className="input" value={editForm.ativo ? 'true' : 'false'} onChange={(e) => setEditForm((f) => ({ ...f, ativo: e.target.value === 'true' }))}>
+            <label className="label" htmlFor="edit-ativo">Status</label>
+            <select id="edit-ativo" className="input" value={editForm.ativo ? 'true' : 'false'} onChange={(e) => setEditForm((f) => ({ ...f, ativo: e.target.value === 'true' }))}>
               <option value="true">Ativo</option>
               <option value="false">Inativo (bloqueado)</option>
             </select>
           </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <button className="btn-ghost" onClick={() => setEditTarget(null)}>Cancelar</button>
-            <button className="btn-primary" disabled={isPending} onClick={onEditar}>Salvar</button>
+          <div className={rodape}>
+            <button type="button" className="btn-ghost w-full sm:w-auto" onClick={() => setEditTarget(null)}>Cancelar</button>
+            <button type="submit" className="btn-primary w-full sm:w-auto" disabled={isPending}>
+              {isPending ? 'Salvando…' : 'Salvar'}
+            </button>
           </div>
-        </div>
+        </form>
       </Modal>
 
-      {/* Modal: Redefinir senha */}
       <Modal open={!!pwTarget} onClose={() => setPwTarget(null)} title={`Redefinir senha: ${pwTarget?.nome}`} size="sm">
-        <div className="space-y-4">
+        <form noValidate className="space-y-4" onSubmit={(e) => { e.preventDefault(); onRedefinir(); }}>
           <div>
-            <label className="label">Nova senha</label>
-            <input className="input" type="password" value={pwForm.senha} onChange={(e) => setPwForm((f) => ({ ...f, senha: e.target.value }))} placeholder="Mínimo 6 caracteres" />
+            <label className="label" htmlFor="pw-senha">Nova senha</label>
+            <input
+              id="pw-senha"
+              className="input"
+              type="password"
+              autoComplete="new-password"
+              enterKeyHint="next"
+              value={pwForm.senha}
+              onChange={(e) => setPwForm((f) => ({ ...f, senha: e.target.value }))}
+              placeholder="Mínimo 6 caracteres"
+            />
           </div>
           <div>
-            <label className="label">Confirmar nova senha</label>
-            <input className="input" type="password" value={pwForm.confirma} onChange={(e) => setPwForm((f) => ({ ...f, confirma: e.target.value }))} />
+            <label className="label" htmlFor="pw-confirma">Confirmar nova senha</label>
+            <input
+              id="pw-confirma"
+              className="input"
+              type="password"
+              autoComplete="new-password"
+              enterKeyHint="done"
+              value={pwForm.confirma}
+              onChange={(e) => setPwForm((f) => ({ ...f, confirma: e.target.value }))}
+            />
           </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <button className="btn-ghost" onClick={() => setPwTarget(null)}>Cancelar</button>
-            <button className="btn-primary" disabled={isPending} onClick={onRedefinir}>Redefinir senha</button>
+          <div className={rodape}>
+            <button type="button" className="btn-ghost w-full sm:w-auto" onClick={() => setPwTarget(null)}>Cancelar</button>
+            <button type="submit" className="btn-primary w-full sm:w-auto" disabled={isPending}>
+              {isPending ? 'Salvando…' : 'Redefinir senha'}
+            </button>
           </div>
-        </div>
+        </form>
       </Modal>
     </>
   );

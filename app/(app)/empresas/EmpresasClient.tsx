@@ -124,9 +124,9 @@ export function EmpresasClient({
             key: 'acoes',
             header: '',
             cell: (r) => (
-              <div className="flex justify-end gap-2 text-xs">
+              <div className="flex flex-wrap justify-end gap-2 text-xs">
                 <button
-                  className="text-info hover:underline"
+                  className="min-h-[40px] text-info hover:underline md:min-h-0"
                   onClick={(e) => {
                     e.stopPropagation();
                     setEditing(r);
@@ -137,7 +137,7 @@ export function EmpresasClient({
                 </button>
                 <button
                   disabled={isPending}
-                  className="text-danger hover:underline disabled:opacity-50"
+                  className="min-h-[40px] text-danger hover:underline disabled:opacity-50 md:min-h-0"
                   onClick={(e) => {
                     e.stopPropagation();
                     onDelete(r);

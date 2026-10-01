@@ -12,7 +12,7 @@ export default async function EmpreendimentosPage() {
     .order('nome');
 
   return (
-    <div className="p-6">
+    <div className="p-4 md:p-6">
       <EmpreendimentosClient
         initial={(data as Empreendimento[]) ?? []}
         loadError={error?.message ?? null}

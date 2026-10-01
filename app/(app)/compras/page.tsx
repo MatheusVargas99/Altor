@@ -19,7 +19,7 @@ export default async function ComprasPage() {
   ]);
 
   return (
-    <div className="p-6">
+    <div className="p-4 md:p-6">
       <ComprasClient
         initial={(data as Compra[]) ?? []}
         empreendimentos={(empreend as Pick<Empreendimento, 'id' | 'nome' | 'codigo_curto'>[]) ?? []}

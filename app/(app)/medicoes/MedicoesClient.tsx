@@ -80,16 +80,10 @@ export function MedicoesClient({
 
   const columns: Column<Medicao>[] = [
     {
-      key: 'data',
-      header: 'Data',
-      cell: (r) => fmtDate(r.data_medicao),
-      sortAccessor: (r) => r.data_medicao ?? '',
-    },
-    {
       key: 'desc',
       header: 'Descrição',
       cell: (r) => (
-        <div>
+        <div className="min-w-0 break-words">
           <div className="text-text">{r.descricao}</div>
           {r.numero_medicao && (
             <div className="text-xs text-text-dim">{r.numero_medicao}</div>
@@ -97,6 +91,12 @@ export function MedicoesClient({
         </div>
       ),
       searchAccessor: (r) => `${r.descricao} ${r.numero_medicao ?? ''}`,
+    },
+    {
+      key: 'data',
+      header: 'Data',
+      cell: (r) => fmtDate(r.data_medicao),
+      sortAccessor: (r) => r.data_medicao ?? '',
     },
     {
       key: 'obra',
@@ -124,7 +124,7 @@ export function MedicoesClient({
     },
     {
       key: 'pct',
-      header: '%',
+      header: '% medido',
       cell: (r) => `${Number(r.percentual_medicao).toFixed(0)}%`,
       className: 'text-right',
     },
@@ -182,28 +182,28 @@ export function MedicoesClient({
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-        <div className="card">
+      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
+        <div className="card col-span-2 min-w-0 p-3 sm:col-span-1 sm:p-4">
           <div className="text-xs uppercase text-text-dim">Orçado total</div>
-          <div className="text-xl font-semibold text-text mt-1">
+          <div className="mt-1 break-words text-base font-semibold text-text sm:text-xl">
             {fmtBRL(totals.orcado)}
           </div>
         </div>
-        <div className="card">
+        <div className="card min-w-0 p-3 sm:p-4">
           <div className="text-xs uppercase text-text-dim">Medido</div>
-          <div className="text-xl font-semibold text-info mt-1">{fmtBRL(totals.medido)}</div>
+          <div className="mt-1 break-words text-base font-semibold text-info sm:text-xl">{fmtBRL(totals.medido)}</div>
         </div>
-        <div className="card">
+        <div className="card min-w-0 p-3 sm:p-4">
           <div className="text-xs uppercase text-text-dim">Pago</div>
-          <div className="text-xl font-semibold text-success mt-1">
+          <div className="mt-1 break-words text-base font-semibold text-success sm:text-xl">
             {fmtBRL(totals.pago)}
           </div>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-3">
+      <div className="mb-3 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
         <select
-          className="input max-w-xs"
+          className="input min-w-0 sm:max-w-xs"
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value as MedicaoStatus | 'TODAS')}
         >
@@ -215,7 +215,7 @@ export function MedicoesClient({
           <option value="CANCELADA">Cancelada</option>
         </select>
         <select
-          className="input max-w-xs"
+          className="input min-w-0 sm:max-w-xs"
           value={filterObra}
           onChange={(e) => setFilterObra(e.target.value)}
         >

@@ -34,7 +34,7 @@ export default async function UsuariosPage() {
     .order('created_at');
 
   return (
-    <div className="p-6 space-y-4">
+    <div className="p-4 md:p-6 space-y-4">
       <PageHeader
         title="Usuários"
         description="Gerencie os acessos ao sistema. Somente administradores podem criar e editar usuários."

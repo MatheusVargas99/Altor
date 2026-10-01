@@ -76,7 +76,7 @@ export function CompraForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <Field label="Empreendimento *" error={errors.empreendimento_id?.message}>
           <Select
             {...register('empreendimento_id')}
@@ -110,17 +110,17 @@ export function CompraForm({
         </Field>
 
         <Field label="Quantidade">
-          <Input type="number" step="0.0001" {...register('quantidade')} />
+          <Input type="number" inputMode="decimal" step="0.0001" {...register('quantidade')} />
         </Field>
         <Field label="Unidade">
           <Select {...register('unidade')} options={unidadeOpts} placeholder="—" />
         </Field>
 
         <Field label="Valor total (R$)">
-          <Input type="number" step="0.01" {...register('valor_total')} />
+          <Input type="number" inputMode="decimal" step="0.01" {...register('valor_total')} />
         </Field>
         <Field label="Prazo entrega (dias)">
-          <Input type="number" {...register('prazo_entrega_dias')} />
+          <Input type="number" inputMode="numeric" {...register('prazo_entrega_dias')} />
         </Field>
 
         <Field label="Condição de pagamento">
@@ -152,11 +152,11 @@ export function CompraForm({
         <Textarea rows={2} {...register('observacoes')} />
       </Field>
 
-      <div className="flex justify-end gap-2 pt-2">
-        <button type="button" className="btn-ghost" onClick={onCancel}>
+      <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
+        <button type="button" className="btn-ghost w-full sm:w-auto" onClick={onCancel}>
           Cancelar
         </button>
-        <button type="submit" className="btn-primary" disabled={isPending}>
+        <button type="submit" className="btn-primary w-full sm:w-auto" disabled={isPending}>
           {isPending ? 'Salvando…' : compra ? 'Salvar' : 'Criar compra'}
         </button>
       </div>

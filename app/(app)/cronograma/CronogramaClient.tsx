@@ -125,13 +125,179 @@ export function CronogramaClient({
     });
   };
 
+  const calc = (r: Row) => {
+    const orcado       = Number(r.custo_orcado)       || 0;
+    const comprometido = Number(r.custo_comprometido) || 0;
+    const pago         = Number(r.custo_pago)         || 0;
+    const pctGasto     = orcado > 0 ? (comprometido / orcado) * 100 : 0;
+    const saldo        = orcado - comprometido;
+    const pctColor     = pctGasto > 100 ? 'text-danger font-bold' : pctGasto >= 90 ? 'text-warn' : 'text-success';
+    const pctGastoTxt  = orcado > 0 ? (pctGasto > 100 ? '+' : '') + pctGasto.toFixed(0) + '%' : '—';
+    return { orcado, comprometido, pago, saldo, pctColor, pctGastoTxt };
+  };
+
+  const vazio = (
+    <div className="px-3 py-8 text-center text-sm">
+      {empreendimentoId ? (
+        <div className="space-y-2">
+          <div className="text-text-dim">Nenhuma etapa encontrada para este empreendimento.</div>
+          <button
+            className="btn-primary w-full text-xs sm:w-auto"
+            disabled={isPending}
+            onClick={onInicializar}
+          >
+            Inicializar EAP padrão (14 etapas)
+          </button>
+        </div>
+      ) : (
+        <span className="text-text-dim">Selecione um empreendimento.</span>
+      )}
+    </div>
+  );
+
   return (
     <>
-      <div className="overflow-x-auto rounded-lg border border-border">
-        <table className="w-full text-sm">
+      {/* Celular: um cartão por etapa, com controles grandes para o dedo */}
+      <div className="space-y-3 md:hidden">
+        {rows.length === 0 && (
+          <div className="rounded-lg border border-border">{vazio}</div>
+        )}
+        {rows.map((r) => {
+          const { orcado, comprometido, pago, saldo, pctColor, pctGastoTxt } = calc(r);
+          const status   = getStatus(r);
+          const pct      = getPct(r);
+          const isSaving = savingId === r.id;
+          const nomeEtapa = r.etapa.replaceAll('_', ' ');
+
+          return (
+            <div
+              key={r.id}
+              className={`rounded-lg border border-border bg-bg-2 p-3 text-sm transition-opacity ${isSaving ? 'opacity-60' : ''}`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <div className="font-semibold text-primary">{r.marco}</div>
+                  <div className="break-words text-xs text-text-dim">{nomeEtapa}</div>
+                </div>
+                <div className="shrink-0 text-right text-xs text-text-dim">
+                  Peso {(Number(r.peso) * 100).toFixed(1)}%
+                </div>
+              </div>
+
+              <div className="mt-3">
+                <div className="mb-1 flex items-center justify-between text-xs text-text-dim">
+                  <span>% Físico</span>
+                  <span className="font-medium text-text">{pct.toFixed(0)}%</span>
+                </div>
+                <div className="h-2.5 overflow-hidden rounded-full bg-bg-3">
+                  <div
+                    className="h-full rounded-full bg-primary transition-all"
+                    style={{ width: `${Math.min(100, pct)}%` }}
+                  />
+                </div>
+                <div className="mt-2 flex items-center gap-2">
+                  <button
+                    type="button"
+                    aria-label={`Diminuir 5% em ${nomeEtapa}`}
+                    disabled={isSaving || pct <= 0}
+                    onClick={() => onPctBlur(r, pct - 5)}
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-border text-lg text-text active:bg-bg-3 disabled:opacity-40"
+                  >
+                    −
+                  </button>
+                  <div className="relative min-w-0 flex-1">
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      min={0}
+                      max={100}
+                      step={5}
+                      defaultValue={pct}
+                      key={pct}
+                      aria-label={`% físico de ${nomeEtapa}`}
+                      onBlur={(e) => onPctBlur(r, Number(e.target.value))}
+                      className="input pr-8 text-right"
+                    />
+                    <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-text-dim">%</span>
+                  </div>
+                  <button
+                    type="button"
+                    aria-label={`Aumentar 5% em ${nomeEtapa}`}
+                    disabled={isSaving || pct >= 100}
+                    onClick={() => onPctBlur(r, pct + 5)}
+                    className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-border text-lg text-text active:bg-bg-3 disabled:opacity-40"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+
+              <div className="mt-3">
+                <label className="mb-1 block text-xs text-text-dim">Status</label>
+                <select
+                  value={status}
+                  onChange={(e) => onStatusChange(r, e.target.value as CronogramaStatus)}
+                  disabled={isSaving}
+                  className={`min-h-[44px] w-full rounded-md border-0 px-3 py-2 text-base font-medium focus:outline-none focus:ring-2 focus:ring-primary ${statusColor(status)}`}
+                  style={{ appearance: 'auto' }}
+                >
+                  {STATUS_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>{o.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <dl className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 border-t border-border pt-3 text-xs">
+                <div>
+                  <dt className="text-text-dim">Início prev.</dt>
+                  <dd>{fmtDate(r.data_inicio_prevista) || '—'}</dd>
+                </div>
+                <div>
+                  <dt className="text-text-dim">Fim prev.</dt>
+                  <dd>{fmtDate(r.data_fim_prevista) || '—'}</dd>
+                </div>
+                <div>
+                  <dt className="text-text-dim">Orçado</dt>
+                  <dd className="break-words">{fmtBRL(orcado)}</dd>
+                </div>
+                <div>
+                  <dt className="text-text-dim">Comprometido</dt>
+                  <dd className="break-words">{fmtBRL(comprometido)}</dd>
+                </div>
+                <div>
+                  <dt className="text-text-dim">Pago</dt>
+                  <dd className="break-words">{fmtBRL(pago)}</dd>
+                </div>
+                <div>
+                  <dt className="text-text-dim">% Gasto</dt>
+                  <dd className={pctColor}>{pctGastoTxt}</dd>
+                </div>
+                <div className="col-span-2">
+                  <dt className="text-text-dim">Saldo</dt>
+                  <dd className={`break-words ${saldo < 0 ? 'text-danger' : ''}`}>
+                    {orcado > 0 ? fmtBRL(saldo) : '—'}
+                  </dd>
+                </div>
+              </dl>
+
+              <button
+                type="button"
+                className="btn-ghost mt-3 w-full"
+                onClick={() => openEdit(r)}
+              >
+                Valores / Datas
+              </button>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Tablet/desktop: tabela; abaixo de lg rola para o lado com a etapa fixa */}
+      <div className="hidden overflow-x-auto rounded-lg border border-border md:block">
+        <table className="w-full whitespace-nowrap text-sm">
           <thead className="bg-bg-3 text-text-dim">
             <tr>
-              <th className="px-3 py-2 text-left">Etapa</th>
+              <th className="sticky left-0 z-10 bg-bg-3 px-3 py-2 text-left">Etapa</th>
               <th className="px-3 py-2 text-left">Marco</th>
               <th className="px-3 py-2 text-right w-14">Peso</th>
               <th className="px-3 py-2 w-36">% Físico</th>
@@ -148,12 +314,7 @@ export function CronogramaClient({
           </thead>
           <tbody>
             {rows.map((r) => {
-              const orcado      = Number(r.custo_orcado)       || 0;
-              const comprometido = Number(r.custo_comprometido) || 0;
-              const pago        = Number(r.custo_pago)          || 0;
-              const pctGasto    = orcado > 0 ? (comprometido / orcado) * 100 : 0;
-              const saldo       = orcado - comprometido;
-              const pctColor    = pctGasto > 100 ? 'text-danger font-bold' : pctGasto >= 90 ? 'text-warn' : 'text-success';
+              const { orcado, comprometido, pago, saldo, pctColor, pctGastoTxt } = calc(r);
               const status      = getStatus(r);
               const pct         = getPct(r);
               const isSaving    = savingId === r.id;
@@ -161,7 +322,7 @@ export function CronogramaClient({
               return (
                 <tr key={r.id} className={`border-t border-border transition-colors ${isSaving ? 'opacity-60' : 'hover:bg-bg-3/30'}`}>
                   {/* Etapa */}
-                  <td className="px-3 py-2 text-xs">{r.etapa.replaceAll('_', ' ')}</td>
+                  <td className="sticky left-0 z-10 bg-bg px-3 py-2 text-xs">{r.etapa.replaceAll('_', ' ')}</td>
 
                   {/* Marco */}
                   <td className="px-3 py-2 font-semibold text-primary">{r.marco}</td>
@@ -171,9 +332,9 @@ export function CronogramaClient({
                     {(Number(r.peso) * 100).toFixed(1)}%
                   </td>
 
-                  {/* % Físico — inline input */}
+                  {/* % Físico — inline input (16px em tablet para o iOS não dar zoom) */}
                   <td className="px-3 py-2">
-                    <div className="flex items-center gap-2">
+                    <div className="flex min-w-[8rem] items-center gap-2">
                       <div className="flex-1 h-1.5 rounded-full bg-bg-3 overflow-hidden">
                         <div
                           className="h-full rounded-full bg-primary transition-all"
@@ -182,13 +343,14 @@ export function CronogramaClient({
                       </div>
                       <input
                         type="number"
+                        inputMode="numeric"
                         min={0}
                         max={100}
                         step={5}
                         defaultValue={pct}
                         key={pct}
                         onBlur={(e) => onPctBlur(r, Number(e.target.value))}
-                        className="w-14 rounded border border-border bg-bg-2 px-1.5 py-0.5 text-right text-xs focus:outline-none focus:border-primary"
+                        className="w-16 rounded border border-border bg-bg-2 px-1.5 py-1.5 text-right text-base focus:outline-none focus:border-primary lg:w-14 lg:py-0.5 lg:text-xs"
                       />
                       <span className="text-xs text-text-dim">%</span>
                     </div>
@@ -200,7 +362,7 @@ export function CronogramaClient({
                       value={status}
                       onChange={(e) => onStatusChange(r, e.target.value as CronogramaStatus)}
                       disabled={isSaving}
-                      className={`rounded px-2 py-1 text-xs font-medium border-0 cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary ${statusColor(status)}`}
+                      className={`rounded px-2 py-1.5 text-base font-medium border-0 cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary lg:py-1 lg:text-xs ${statusColor(status)}`}
                       style={{ appearance: 'auto' }}
                     >
                       {STATUS_OPTIONS.map((o) => (
@@ -218,7 +380,7 @@ export function CronogramaClient({
                   <td className="px-3 py-2 text-right text-xs">{fmtBRL(comprometido)}</td>
                   <td className="px-3 py-2 text-right text-xs">{fmtBRL(pago)}</td>
                   <td className={`px-3 py-2 text-right text-xs ${pctColor}`}>
-                    {orcado > 0 ? (pctGasto > 100 ? '+' : '') + pctGasto.toFixed(0) + '%' : '—'}
+                    {pctGastoTxt}
                   </td>
                   <td className={`px-3 py-2 text-right text-xs ${saldo < 0 ? 'text-danger' : 'text-text-dim'}`}>
                     {orcado > 0 ? fmtBRL(saldo) : '—'}
@@ -227,7 +389,7 @@ export function CronogramaClient({
                   {/* Ação */}
                   <td className="px-3 py-2 text-right">
                     <button
-                      className="text-xs text-text-dim hover:text-info hover:underline whitespace-nowrap"
+                      className="px-2 py-2 text-xs text-text-dim hover:text-info hover:underline whitespace-nowrap lg:p-0"
                       onClick={() => openEdit(r)}
                     >
                       Valores/Datas
@@ -239,22 +401,7 @@ export function CronogramaClient({
 
             {rows.length === 0 && (
               <tr>
-                <td colSpan={13} className="px-3 py-8 text-center text-sm">
-                  {empreendimentoId ? (
-                    <div className="space-y-2">
-                      <div className="text-text-dim">Nenhuma etapa encontrada para este empreendimento.</div>
-                      <button
-                        className="btn-primary text-xs"
-                        disabled={isPending}
-                        onClick={onInicializar}
-                      >
-                        Inicializar EAP padrão (14 etapas)
-                      </button>
-                    </div>
-                  ) : (
-                    <span className="text-text-dim">Selecione um empreendimento.</span>
-                  )}
-                </td>
+                <td colSpan={13}>{vazio}</td>
               </tr>
             )}
           </tbody>
@@ -273,6 +420,7 @@ export function CronogramaClient({
             <label className="label">Valor orçado (R$)</label>
             <input
               type="number"
+              inputMode="decimal"
               step="0.01"
               className="input"
               value={form.custo_orcado}
@@ -280,7 +428,7 @@ export function CronogramaClient({
             />
             <div className="text-xs text-text-dim mt-1">Valor planejado/orçado para esta etapa</div>
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label className="label">Início previsto</label>
               <input
@@ -314,9 +462,9 @@ export function CronogramaClient({
             </div>
           )}
 
-          <div className="flex justify-end gap-2">
-            <button type="button" className="btn-ghost" onClick={() => setEditing(null)}>Cancelar</button>
-            <button type="button" className="btn-primary" disabled={isPending} onClick={onSave}>Salvar</button>
+          <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <button type="button" className="btn-ghost w-full sm:w-auto" onClick={() => setEditing(null)}>Cancelar</button>
+            <button type="button" className="btn-primary w-full sm:w-auto" disabled={isPending} onClick={onSave}>Salvar</button>
           </div>
         </div>
       </Modal>

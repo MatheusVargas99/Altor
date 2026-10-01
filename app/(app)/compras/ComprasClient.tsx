@@ -89,16 +89,10 @@ export function ComprasClient({
 
   const columns: Column<Compra>[] = [
     {
-      key: 'data',
-      header: 'Aprovação',
-      cell: (r) => fmtDate(r.data_aprovacao),
-      sortAccessor: (r) => r.data_aprovacao ?? '',
-    },
-    {
       key: 'material',
       header: 'Material/serviço',
       cell: (r) => (
-        <div>
+        <div className="min-w-0 break-words">
           <div className="text-text">{r.material_servico}</div>
           {r.etapa && (
             <div className="text-xs text-text-dim">{r.etapa.replaceAll('_', ' ')}</div>
@@ -107,6 +101,12 @@ export function ComprasClient({
       ),
       searchAccessor: (r) =>
         `${r.material_servico} ${r.descricao_detalhada ?? ''} ${r.numero_pedido ?? ''}`,
+    },
+    {
+      key: 'data',
+      header: 'Aprovação',
+      cell: (r) => fmtDate(r.data_aprovacao),
+      sortAccessor: (r) => r.data_aprovacao ?? '',
     },
     {
       key: 'obra',
@@ -193,10 +193,10 @@ export function ComprasClient({
         </div>
       )}
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
         {(['ABERTO', 'EM_NEGOCIACAO', 'COMPRADO', 'RECEBIDO'] as const).map((s) => (
-          <div key={s} className="card">
-            <div className="text-xs uppercase text-text-dim">{s.replaceAll('_', ' ')}</div>
+          <div key={s} className="card min-w-0 p-3 sm:p-4">
+            <div className="truncate text-xs uppercase text-text-dim">{s.replaceAll('_', ' ')}</div>
             <div className="text-2xl font-semibold text-primary mt-1">
               {counts[s] ?? 0}
             </div>
@@ -204,9 +204,9 @@ export function ComprasClient({
         ))}
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-3">
+      <div className="mb-3 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
         <select
-          className="input max-w-xs"
+          className="input min-w-0 sm:max-w-xs"
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value as CompraStatus | 'TODOS')}
         >
@@ -218,7 +218,7 @@ export function ComprasClient({
           <option value="CANCELADO">Cancelado</option>
         </select>
         <select
-          className="input max-w-xs"
+          className="input min-w-0 sm:max-w-xs"
           value={filterPrio}
           onChange={(e) => setFilterPrio(e.target.value as CompraPrioridade | 'TODAS')}
         >
@@ -228,7 +228,7 @@ export function ComprasClient({
           <option value="NORMAL">Normal</option>
         </select>
         <select
-          className="input max-w-xs"
+          className="input col-span-2 min-w-0 sm:max-w-xs"
           value={filterObra}
           onChange={(e) => setFilterObra(e.target.value)}
         >

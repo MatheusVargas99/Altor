@@ -69,19 +69,19 @@ export function EmpresaForm({
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Field label="Razão social *" error={errors.razao_social?.message}>
-          <Input {...register('razao_social')} />
+          <Input autoComplete="organization" {...register('razao_social')} />
         </Field>
         <Field label="Nome fantasia" error={errors.nome_fantasia?.message}>
-          <Input {...register('nome_fantasia')} />
+          <Input autoComplete="off" {...register('nome_fantasia')} />
         </Field>
 
         <Field label="CNPJ" hint="14 dígitos" error={errors.cnpj?.message}>
-          <Input {...register('cnpj')} />
+          <Input inputMode="numeric" autoComplete="off" {...register('cnpj')} />
         </Field>
         <Field label="Inscrição estadual" error={errors.inscricao_estadual?.message}>
-          <Input {...register('inscricao_estadual')} />
+          <Input inputMode="numeric" autoComplete="off" {...register('inscricao_estadual')} />
         </Field>
 
         <Field label="Categoria" error={errors.categoria?.message}>
@@ -92,38 +92,58 @@ export function EmpresaForm({
           />
         </Field>
         <Field label="Contato responsável" error={errors.contato_responsavel?.message}>
-          <Input {...register('contato_responsavel')} />
+          <Input autoComplete="off" autoCapitalize="words" {...register('contato_responsavel')} />
         </Field>
 
         <Field label="E-mail" error={errors.email?.message}>
-          <Input type="email" {...register('email')} />
+          <Input
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            {...register('email')}
+          />
         </Field>
         <Field label="Telefone" error={errors.telefone?.message}>
-          <Input {...register('telefone')} />
+          <Input type="tel" inputMode="tel" autoComplete="tel" {...register('telefone')} />
         </Field>
 
         <Field label="Endereço" error={errors.endereco?.message}>
-          <Input {...register('endereco')} />
+          <Input autoComplete="street-address" {...register('endereco')} />
         </Field>
         <Field label="Cidade" error={errors.cidade?.message}>
-          <Input {...register('cidade')} />
+          <Input autoComplete="address-level2" {...register('cidade')} />
         </Field>
 
         <Field label="UF" hint="2 letras" error={errors.uf?.message}>
-          <Input maxLength={2} {...register('uf')} />
+          <Input
+            maxLength={2}
+            autoComplete="address-level1"
+            autoCapitalize="characters"
+            autoCorrect="off"
+            {...register('uf')}
+          />
         </Field>
         <Field label="Chave PIX" error={errors.chave_pix?.message}>
-          <Input {...register('chave_pix')} />
+          <Input
+            autoComplete="off"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
+            {...register('chave_pix')}
+          />
         </Field>
 
         <Field label="Banco" error={errors.banco?.message}>
           <Input {...register('banco')} />
         </Field>
         <Field label="Agência" error={errors.agencia?.message}>
-          <Input {...register('agencia')} />
+          <Input inputMode="numeric" autoComplete="off" {...register('agencia')} />
         </Field>
         <Field label="Conta" error={errors.conta?.message}>
-          <Input {...register('conta')} />
+          <Input autoComplete="off" {...register('conta')} />
         </Field>
 
         <Field label="Status" error={errors.ativo?.message}>
@@ -141,11 +161,11 @@ export function EmpresaForm({
         <Textarea rows={3} {...register('observacoes')} />
       </Field>
 
-      <div className="flex justify-end gap-2 pt-2">
-        <button type="button" className="btn-ghost" onClick={onCancel}>
+      <div className="flex flex-col-reverse gap-2 pt-2 sm:flex-row sm:justify-end">
+        <button type="button" className="btn-ghost w-full sm:w-auto" onClick={onCancel}>
           Cancelar
         </button>
-        <button type="submit" className="btn-primary" disabled={isPending}>
+        <button type="submit" className="btn-primary w-full sm:w-auto" disabled={isPending}>
           {isPending ? 'Salvando…' : empresa ? 'Salvar alterações' : 'Criar empresa'}
         </button>
       </div>

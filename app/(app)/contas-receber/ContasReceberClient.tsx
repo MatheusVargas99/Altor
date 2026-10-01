@@ -76,13 +76,8 @@ export function ContasReceberClient({
             ? 'bg-bg-3 text-text-dim'
             : 'bg-warn/20 text-warn';
 
+  // Descrição primeiro: no celular a 1ª coluna vira o título do cartão
   const columns: Column<ContaReceber>[] = [
-    {
-      key: 'venc',
-      header: 'Vencimento',
-      cell: (r) => fmtDate(r.data_vencimento),
-      sortAccessor: (r) => r.data_vencimento,
-    },
     {
       key: 'descricao',
       header: 'Descrição',
@@ -95,6 +90,12 @@ export function ContasReceberClient({
         </div>
       ),
       searchAccessor: (r) => `${r.descricao} ${r.numero_parcela ?? ''}`,
+    },
+    {
+      key: 'venc',
+      header: 'Vencimento',
+      cell: (r) => <span className="whitespace-nowrap">{fmtDate(r.data_vencimento)}</span>,
+      sortAccessor: (r) => r.data_vencimento,
     },
     {
       key: 'obra',
@@ -116,7 +117,7 @@ export function ContasReceberClient({
       header: 'Valor',
       cell: (r) => fmtBRL(r.valor_original),
       sortAccessor: (r) => r.valor_original,
-      className: 'text-right',
+      className: 'text-right whitespace-nowrap tabular-nums',
     },
     {
       key: 'aberto',
@@ -127,13 +128,13 @@ export function ContasReceberClient({
         </span>
       ),
       sortAccessor: (r) => r.valor_aberto,
-      className: 'text-right',
+      className: 'text-right whitespace-nowrap tabular-nums',
     },
     {
       key: 'status',
       header: 'Status',
       cell: (r) => (
-        <span className={`rounded px-2 py-0.5 text-xs ${statusColor(r.status)}`}>
+        <span className={`whitespace-nowrap rounded px-2 py-0.5 text-xs ${statusColor(r.status)}`}>
           {r.status}
         </span>
       ),
@@ -189,30 +190,31 @@ export function ContasReceberClient({
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
-        <div className="card">
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 mb-4">
+        <div className="card col-span-2 min-w-0 p-3 sm:col-span-1 sm:p-4">
           <div className="text-xs uppercase text-text-dim">Total em aberto</div>
-          <div className="text-xl font-semibold text-warn mt-1">
+          <div className="text-base sm:text-xl font-semibold tabular-nums break-words text-warn mt-1">
             {fmtBRL(totals.aberto)}
           </div>
         </div>
-        <div className="card">
+        <div className="card min-w-0 p-3 sm:p-4">
           <div className="text-xs uppercase text-text-dim">Recebido</div>
-          <div className="text-xl font-semibold text-success mt-1">
+          <div className="text-base sm:text-xl font-semibold tabular-nums break-words text-success mt-1">
             {fmtBRL(totals.pago)}
           </div>
         </div>
-        <div className="card">
+        <div className="card min-w-0 p-3 sm:p-4">
           <div className="text-xs uppercase text-text-dim">Atrasado</div>
-          <div className="text-xl font-semibold text-danger mt-1">
+          <div className="text-base sm:text-xl font-semibold tabular-nums break-words text-danger mt-1">
             {fmtBRL(totals.atrasado)}
           </div>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 mb-3">
+      <div className="grid grid-cols-2 gap-2 mb-3 sm:flex sm:flex-wrap">
         <select
-          className="input max-w-xs"
+          aria-label="Filtrar por status"
+          className="input min-w-0 sm:max-w-xs"
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value as CrStatus | 'TODOS')}
         >
@@ -224,7 +226,8 @@ export function ContasReceberClient({
           <option value="CANCELADO">Cancelado</option>
         </select>
         <select
-          className="input max-w-xs"
+          aria-label="Filtrar por empreendimento"
+          className="input min-w-0 sm:max-w-xs"
           value={filterObra}
           onChange={(e) => setFilterObra(e.target.value)}
         >

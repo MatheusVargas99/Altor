@@ -25,7 +25,7 @@ export default async function ComissoesPage() {
   ]);
 
   return (
-    <div className="p-6">
+    <div className="p-4 md:p-6">
       <ComissoesClient
         initial={(comissoes as Comissao[]) ?? []}
         empreendimentos={(empreend as Pick<Empreendimento, 'id' | 'nome'>[]) ?? []}

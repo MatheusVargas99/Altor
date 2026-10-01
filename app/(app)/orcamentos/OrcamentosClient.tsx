@@ -126,9 +126,9 @@ export function OrcamentosClient({
 
   return (
     <>
-      <div className="flex justify-end mb-2">
+      <div className="mb-2 flex justify-end">
         <button
-          className="btn-primary"
+          className="btn-primary w-full sm:w-auto"
           onClick={() => {
             setEditing(null);
             setOpen(true);
@@ -143,9 +143,9 @@ export function OrcamentosClient({
         </div>
       )}
 
-      <div className="flex flex-wrap gap-2 mb-4">
+      <div className="mb-4 grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
         <select
-          className="input max-w-xs"
+          className="input col-span-2 min-w-0 sm:max-w-xs"
           value={filterObra}
           onChange={(e) => setFilterObra(e.target.value)}
         >
@@ -157,7 +157,7 @@ export function OrcamentosClient({
           ))}
         </select>
         <select
-          className="input max-w-xs"
+          className="input min-w-0 sm:max-w-xs"
           value={filterEtapa}
           onChange={(e) => setFilterEtapa(e.target.value)}
         >
@@ -169,7 +169,7 @@ export function OrcamentosClient({
           ))}
         </select>
         <select
-          className="input max-w-xs"
+          className="input min-w-0 sm:max-w-xs"
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value as OrcamentoStatus | 'TODOS')}
         >
@@ -181,7 +181,9 @@ export function OrcamentosClient({
           <option value="CANCELADO">Cancelado</option>
         </select>
         <input
-          className="input max-w-xs"
+          type="search"
+          enterKeyHint="search"
+          className="input col-span-2 min-w-0 sm:max-w-xs"
           placeholder="Filtrar por grupo de cotação…"
           value={filterGrupo}
           onChange={(e) => setFilterGrupo(e.target.value)}
@@ -201,9 +203,9 @@ export function OrcamentosClient({
             ? empreendNomes[first.empreendimento_id] ?? '—'
             : '—';
           return (
-            <section key={g.key} className="card">
+            <section key={g.key} className="card min-w-0 p-3 sm:p-4">
               <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
-                <div>
+                <div className="min-w-0 break-words">
                   <div className="text-xs text-text-dim uppercase tracking-wide">
                     {obraName} · {first.etapa.replaceAll('_', ' ')}
                   </div>
@@ -218,7 +220,93 @@ export function OrcamentosClient({
                   {g.items.length} proposta(s)
                 </div>
               </div>
-              <div className="overflow-x-auto rounded border border-border">
+              {/* Celular: um cartão por proposta (do menor para o maior valor) */}
+              <div className="space-y-2 md:hidden">
+                {g.items.map((o, idx) => {
+                  const podeVencer = o.status !== 'VENCEDOR' && o.status !== 'CANCELADO';
+                  return (
+                    <div
+                      key={o.id}
+                      className={`rounded-lg border p-3 text-sm ${
+                        o.status === 'VENCEDOR' ? 'border-success bg-success/5' : 'border-border bg-bg'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 break-words font-medium text-text">
+                          {o.empresa_id ? empresaNomes[o.empresa_id] ?? '—' : '—'}
+                        </div>
+                        <span
+                          className={`shrink-0 rounded px-2 py-0.5 text-xs ${statusColor(o.status)}`}
+                        >
+                          {o.status.replaceAll('_', ' ')}
+                        </span>
+                      </div>
+                      <div className="mt-1 flex flex-wrap items-baseline gap-x-2">
+                        <span className="text-lg font-semibold text-primary">
+                          {fmtBRL(Number(o.valor_total))}
+                        </span>
+                        {idx === 0 && g.items.length > 1 && (
+                          <span className="rounded bg-success/20 px-1.5 py-0.5 text-[11px] text-success">
+                            Menor preço
+                          </span>
+                        )}
+                      </div>
+                      <dl className="mt-2 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs">
+                        <div>
+                          <dt className="text-text-dim">Qtd × unit.</dt>
+                          <dd className="break-words">
+                            {Number(o.quantidade)} {o.unidade ?? ''} × {fmtBRL(Number(o.valor_unitario))}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="text-text-dim">Prazo</dt>
+                          <dd>{o.prazo_entrega_dias != null ? `${o.prazo_entrega_dias} dias` : '—'}</dd>
+                        </div>
+                        <div>
+                          <dt className="text-text-dim">Condição</dt>
+                          <dd className="break-words">{o.condicao_pagamento ?? '—'}</dd>
+                        </div>
+                        <div>
+                          <dt className="text-text-dim">Validade</dt>
+                          <dd>{fmtDate(o.validade_proposta) || '—'}</dd>
+                        </div>
+                      </dl>
+                      <div className="mt-3 grid grid-cols-2 gap-2 border-t border-border pt-3">
+                        {podeVencer && (
+                          <button
+                            type="button"
+                            className="col-span-2 min-h-[44px] rounded-md border border-success bg-success/15 px-3 py-2 text-sm font-medium text-success active:bg-success/25 disabled:opacity-50"
+                            disabled={isPending}
+                            onClick={() => onVencedor(o)}
+                          >
+                            Marcar vencedor
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          className="min-h-[44px] rounded-md border border-border px-3 py-2 text-sm text-info active:bg-bg-3"
+                          onClick={() => {
+                            setEditing(o);
+                            setOpen(true);
+                          }}
+                        >
+                          Editar
+                        </button>
+                        <button
+                          type="button"
+                          className="min-h-[44px] rounded-md border border-border px-3 py-2 text-sm text-danger active:bg-bg-3 disabled:opacity-50"
+                          disabled={isPending}
+                          onClick={() => onDelete(o)}
+                        >
+                          Excluir
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <div className="hidden overflow-x-auto rounded border border-border md:block">
                 <table className="w-full text-sm">
                   <thead className="bg-bg-3 text-text-dim">
                     <tr>
@@ -269,7 +357,7 @@ export function OrcamentosClient({
                         <td className="px-3 py-2 text-right text-xs whitespace-nowrap">
                           {o.status !== 'VENCEDOR' && o.status !== 'CANCELADO' && (
                             <button
-                              className="text-success hover:underline mr-2"
+                              className="mr-2 py-2 text-success hover:underline lg:py-0"
                               disabled={isPending}
                               onClick={() => onVencedor(o)}
                             >
@@ -277,7 +365,7 @@ export function OrcamentosClient({
                             </button>
                           )}
                           <button
-                            className="text-info hover:underline mr-2"
+                            className="mr-2 py-2 text-info hover:underline lg:py-0"
                             onClick={() => {
                               setEditing(o);
                               setOpen(true);
@@ -286,7 +374,7 @@ export function OrcamentosClient({
                             Editar
                           </button>
                           <button
-                            className="text-danger hover:underline"
+                            className="py-2 text-danger hover:underline lg:py-0"
                             disabled={isPending}
                             onClick={() => onDelete(o)}
                           >
@@ -310,7 +398,7 @@ export function OrcamentosClient({
                           total: Number(o.valor_total),
                           idx,
                         }))}
-                        margin={{ top: 5, right: 10, left: 10, bottom: 40 }}
+                        margin={{ top: 5, right: 4, left: 0, bottom: 40 }}
                       >
                         <CartesianGrid stroke="#334155" strokeDasharray="3 3" />
                         <XAxis
@@ -320,6 +408,9 @@ export function OrcamentosClient({
                           angle={-25}
                           textAnchor="end"
                           interval={0}
+                          tickFormatter={(v: string) =>
+                            v.length > 14 ? `${v.slice(0, 13)}…` : v
+                          }
                         />
                         <YAxis
                           stroke="#94A3B8"

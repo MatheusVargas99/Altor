@@ -24,7 +24,7 @@ export function ToasterProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastCtx.Provider value={push}>
       {children}
-      <div className="fixed top-4 right-4 z-50 space-y-2">
+      <div className="pointer-events-none fixed left-4 right-4 top-[calc(env(safe-area-inset-top)+1rem)] z-[60] space-y-2 sm:left-auto sm:max-w-sm">
         {items.map((t) => (
           <div
             key={t.id}
