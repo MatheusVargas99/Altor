@@ -34,7 +34,8 @@ export async function updateSession(request: NextRequest) {
   const isPublicAsset =
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon') ||
-    pathname === '/';
+    pathname === '/' ||
+    pathname === '/api/keep-alive'; // cron do Vercel, protegido por CRON_SECRET na própria rota
 
   if (!user && !isAuthRoute && !isPublicAsset) {
     const url = request.nextUrl.clone();
