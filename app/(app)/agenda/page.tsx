@@ -7,6 +7,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function AgendaPage() {
   const supabase = createClient();
+  await supabase.rpc('atualizar_status_atrasados');
 
   // 12 months back (catches all overdue) + 3 months forward
   const hoje = new Date();

@@ -30,6 +30,7 @@ export default async function CronogramaPage({
   searchParams: { obra?: string };
 }) {
   const supabase = createClient();
+  await supabase.rpc('atualizar_status_atrasados');
   const { data: empreendimentos } = await supabase
     .from('empreendimentos')
     .select('id, nome, codigo_curto')

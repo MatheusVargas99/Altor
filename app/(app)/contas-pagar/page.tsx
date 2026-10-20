@@ -6,9 +6,9 @@ export const dynamic = 'force-dynamic';
 
 export default async function CPPage() {
   const supabase = createClient();
-  // Vencidas e não quitadas viram ATRASADO (o cron diário faz o mesmo; isto
-  // cobre o banco ter ficado pausado no horário do cron).
-  await supabase.rpc('atualizar_cp_atrasadas');
+  // Contas vencidas e etapas fora do prazo viram atrasadas (o cron diário faz
+  // o mesmo; isto cobre o banco ter ficado pausado no horário do cron).
+  await supabase.rpc('atualizar_status_atrasados');
   const [{ data: contas, error }, { data: empreend }, { data: empresas }] =
     await Promise.all([
       supabase

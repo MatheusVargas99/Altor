@@ -6,6 +6,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function CRPage() {
   const supabase = createClient();
+  await supabase.rpc('atualizar_status_atrasados');
   const [{ data: contas, error }, { data: empreend }, { data: clientes }] =
     await Promise.all([
       supabase
