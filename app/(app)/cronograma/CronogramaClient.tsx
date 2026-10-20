@@ -451,7 +451,7 @@ export function CronogramaClient({
 
           {editing && (
             <div className="rounded border border-border bg-bg-3 p-3 text-xs text-text-dim space-y-1">
-              <div>Orçamentos aprovados (comprometido): <strong className="text-text">{fmtBRL(Number(editing.custo_comprometido))}</strong></div>
+              <div>Lançado em contas a pagar (comprometido):<strong className="text-text">{fmtBRL(Number(editing.custo_comprometido))}</strong></div>
               <div>Pago até agora: <strong className="text-text">{fmtBRL(Number(editing.custo_pago))}</strong></div>
               {Number(editing.custo_orcado) > 0 && (
                 <div className={Number(editing.custo_comprometido) > Number(editing.custo_orcado) ? 'text-danger' : 'text-success'}>

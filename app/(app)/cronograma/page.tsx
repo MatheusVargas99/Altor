@@ -64,7 +64,7 @@ export default async function CronogramaPage({
     <div className="p-4 md:p-6 space-y-5">
       <PageHeader
         title="Cronograma físico-financeiro"
-        description="EAP padrão criada automaticamente por empreendimento. Selecione a obra."
+        description="EAP padrão criada automaticamente por empreendimento. Comprometido e pago vêm das contas a pagar de cada etapa. Selecione a obra."
       />
 
       <div className="flex flex-wrap gap-2 mb-2">

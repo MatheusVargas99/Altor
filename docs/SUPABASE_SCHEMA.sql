@@ -627,14 +627,14 @@ select
   c.data_inicio_prevista, c.data_fim_prevista, c.data_inicio_real, c.data_fim_real,
   c.custo_orcado, c.percentual_fisico, c.peso, c.status, c.responsavel_id,
   coalesce(
-    (select sum(o.valor_total) from orcamentos o
-      where o.empreendimento_id = c.empreendimento_id
-        and o.etapa = c.etapa and o.status = 'VENCEDOR'), 0
+    (select sum(p.valor_original) from contas_pagar p
+      where p.empreendimento_id = c.empreendimento_id
+        and p.etapa_eap = c.etapa and p.status <> 'CANCELADO'), 0
   ) as custo_comprometido,
   coalesce(
     (select sum(p.valor_pago) from contas_pagar p
       where p.empreendimento_id = c.empreendimento_id
-        and p.etapa_eap = c.etapa), 0
+        and p.etapa_eap = c.etapa and p.status <> 'CANCELADO'), 0
   ) as custo_pago
 from cronograma c;
 
