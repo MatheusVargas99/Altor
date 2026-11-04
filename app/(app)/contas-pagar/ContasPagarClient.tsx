@@ -44,6 +44,13 @@ export function ContasPagarClient({
       ),
     [empresas],
   );
+  const empresaBusca = useMemo(
+    () =>
+      Object.fromEntries(
+        empresas.map((e) => [e.id, `${e.nome_fantasia ?? ''} ${e.razao_social}`]),
+      ),
+    [empresas],
+  );
 
   const filtered = useMemo(() => {
     return initial.filter((r) => {
@@ -109,6 +116,7 @@ export function ContasPagarClient({
       key: 'empresa',
       header: 'Fornecedor',
       cell: (r) => (r.empresa_id ? empresaNomes[r.empresa_id] ?? '—' : '—'),
+      searchAccessor: (r) => (r.empresa_id ? empresaBusca[r.empresa_id] ?? '' : ''),
     },
     {
       key: 'etapa',
@@ -274,7 +282,7 @@ export function ContasPagarClient({
           },
         ]}
         emptyText="Nenhuma conta a pagar."
-        searchPlaceholder="Buscar por descrição, doc…"
+        searchPlaceholder="Buscar por descrição, doc, fornecedor…"
       />
 
       <Modal
