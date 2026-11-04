@@ -29,5 +29,12 @@ export const importCronogramaSchema = z.object({
   atualizar_custo: z.boolean(),
 });
 
+export const fisicoTarefaSchema = z.object({
+  id: z.string().regex(/^[0-9a-f-]{36}$/i, 'Tarefa inválida'),
+  percentual: z.number().min(0, 'O % físico vai de 0 a 100').max(100, 'O % físico vai de 0 a 100'),
+  atualizar_etapa: z.boolean(),
+});
+
 export type TarefaImport = z.infer<typeof tarefaImportSchema>;
+export type FisicoTarefaInput = z.infer<typeof fisicoTarefaSchema>;
 export type ImportCronogramaInput = z.infer<typeof importCronogramaSchema>;

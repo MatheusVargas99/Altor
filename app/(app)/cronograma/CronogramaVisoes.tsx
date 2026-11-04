@@ -20,19 +20,29 @@ export function CronogramaVisoes({
   children,
 }: {
   empreendimentoId: string;
-  etapas: { etapa: string; data_inicio_prevista: string | null; data_fim_prevista: string | null }[];
+  etapas: {
+    etapa: string;
+    data_inicio_prevista: string | null;
+    data_fim_prevista: string | null;
+    percentual_fisico: number;
+  }[];
   tarefas: Tarefa[];
   children: React.ReactNode;
 }) {
   const [visao, setVisao] = useState<Visao>('etapas');
   const [importando, setImportando] = useState(false);
 
-  const etapasSalvas = useMemo(() => {
-    const mapa = new Map<string, EtapaEap | null>();
+  const { etapasSalvas, fisicoSalvo } = useMemo(() => {
+    const etapasSalvas = new Map<string, EtapaEap | null>();
+    const fisicoSalvo = new Map<string, number>();
     for (const t of tarefas) {
-      if (t.uid_msproject) mapa.set(t.uid_msproject, t.etapa);
+      if (!t.uid_msproject) continue;
+      etapasSalvas.set(t.uid_msproject, t.etapa);
+      if (!t.resumo && Number(t.percentual_fisico) > 0) {
+        fisicoSalvo.set(t.uid_msproject, Number(t.percentual_fisico));
+      }
     }
-    return mapa;
+    return { etapasSalvas, fisicoSalvo };
   }, [tarefas]);
 
   const atual = tarefas.length > 0 ? visao : 'etapas';
@@ -66,7 +76,7 @@ export function CronogramaVisoes({
       </div>
 
       {atual === 'etapas' && children}
-      {atual === 'tarefas' && <TarefasLista tarefas={tarefas} />}
+      {atual === 'tarefas' && <TarefasLista tarefas={tarefas} etapas={etapas} />}
       {atual === 'gantt' && <TarefasGantt tarefas={tarefas} />}
 
       <ImportarMsProjectModal
@@ -75,6 +85,7 @@ export function CronogramaVisoes({
         empreendimentoId={empreendimentoId}
         etapas={etapas}
         etapasSalvas={etapasSalvas}
+        fisicoSalvo={fisicoSalvo}
         totalTarefas={tarefas.length}
       />
     </div>

@@ -2,7 +2,12 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
-import { importCronogramaSchema, type ImportCronogramaInput } from '@/lib/schemas/cronograma-import';
+import {
+  fisicoTarefaSchema,
+  importCronogramaSchema,
+  type FisicoTarefaInput,
+  type ImportCronogramaInput,
+} from '@/lib/schemas/cronograma-import';
 import type { CronogramaStatus } from '@/types/db';
 
 type Result<T = void> = { ok: true; data?: T } | { ok: false; error: string };
@@ -53,6 +58,22 @@ export async function importarCronogramaMsProject(
   if (error) return { ok: false, error: error.message };
   revalidatePath('/cronograma');
   return { ok: true, data: data as { tarefas: number; etapas: number } };
+}
+
+export async function atualizarFisicoTarefa(input: FisicoTarefaInput): Promise<Result> {
+  const { supabase } = await requireUser();
+  const parsed = fisicoTarefaSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Dados inválidos' };
+  }
+  const { error } = await supabase.rpc('atualizar_fisico_tarefa', {
+    p_tarefa_id: parsed.data.id,
+    p_percentual: parsed.data.percentual,
+    p_atualizar_etapa: parsed.data.atualizar_etapa,
+  });
+  if (error) return { ok: false, error: error.message };
+  revalidatePath('/cronograma');
+  return { ok: true };
 }
 
 const EAP_PADRAO = [

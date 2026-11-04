@@ -90,6 +90,8 @@ begin
   );
   get diagnostics v_tarefas = row_count;
 
+  perform recalcular_resumos_cronograma(p_empreendimento_id);
+
   if p_atualizar_datas or p_atualizar_fisico or p_atualizar_custo then
     with folhas as (
       select
@@ -139,3 +141,129 @@ revoke all on function public.importar_cronograma_msproject(uuid, jsonb, boolean
   from public, anon;
 grant execute on function public.importar_cronograma_msproject(uuid, jsonb, boolean, boolean, boolean)
   to authenticated, service_role;
+
+-- =====================================================================
+-- % físico editável por tarefa
+-- =====================================================================
+-- Migração: cronograma_tarefas_fisico_editavel. Substitui
+-- importar_cronograma_msproject acima, que passa a chamar
+-- recalcular_resumos_cronograma logo depois do insert.
+--
+-- Regras:
+--   * só tarefa folha é editada; o % de um grupo é sempre calculado;
+--   * grupos e etapa usam a média das folhas, ponderada pela duração;
+--   * p_atualizar_etapa = false salva a tarefa e os grupos e deixa a etapa
+--     como está. A tela usa isso quando a edição derrubaria o % da etapa,
+--     caso de etapa com avanço lançado e tarefas ainda em 0%;
+--   * ao reimportar, a tela reenvia o % lançado (pelo UID do MS Project).
+-- =====================================================================
+
+alter table public.cronograma_tarefas
+  add column atualizado_em  timestamptz not null default now(),
+  add column atualizado_por uuid references auth.users(id) on delete set null;
+
+create trigger trg_cronograma_tarefas_atualizado_em
+before update on public.cronograma_tarefas
+for each row execute function fn_set_atualizado_em();
+
+create policy "auth update" on public.cronograma_tarefas
+  for update to authenticated using (is_active_user()) with check (is_active_user());
+
+create or replace function public.recalcular_resumos_cronograma(
+  p_empreendimento_id uuid,
+  p_wbs               text default null
+)
+returns void
+language sql
+set search_path = public
+as $$
+  update cronograma_tarefas s
+     set percentual_fisico = x.fisico
+    from (
+      select
+        p.id,
+        round(
+          sum(f.percentual_fisico * greatest(coalesce(f.data_fim - f.data_inicio, 0) + 1, 1))
+          / sum(greatest(coalesce(f.data_fim - f.data_inicio, 0) + 1, 1)),
+          2
+        ) as fisico
+      from cronograma_tarefas p
+      join cronograma_tarefas f
+        on f.empreendimento_id = p.empreendimento_id
+       and not f.resumo
+       and f.wbs like p.wbs || '.%'
+      where p.empreendimento_id = p_empreendimento_id
+        and p.resumo
+        and (p_wbs is null or p_wbs like p.wbs || '.%')
+      group by p.id
+    ) x
+   where s.id = x.id
+     and s.percentual_fisico is distinct from x.fisico;
+$$;
+
+create or replace function public.atualizar_fisico_tarefa(
+  p_tarefa_id       uuid,
+  p_percentual      numeric,
+  p_atualizar_etapa boolean default true
+)
+returns jsonb
+language plpgsql
+set search_path = public
+as $$
+declare
+  v_user   uuid := auth.uid();
+  v_tarefa cronograma_tarefas%rowtype;
+  v_fisico numeric;
+begin
+  if not is_active_user() then
+    raise exception 'Não autorizado';
+  end if;
+  if p_percentual is null or p_percentual < 0 or p_percentual > 100 then
+    raise exception 'O %% físico deve estar entre 0 e 100';
+  end if;
+
+  select * into v_tarefa from cronograma_tarefas where id = p_tarefa_id;
+  if not found then
+    raise exception 'Tarefa não encontrada';
+  end if;
+  if v_tarefa.resumo then
+    raise exception 'O %% de um grupo é calculado pelas tarefas dele';
+  end if;
+
+  update cronograma_tarefas
+     set percentual_fisico = p_percentual, atualizado_por = v_user
+   where id = p_tarefa_id;
+
+  perform recalcular_resumos_cronograma(v_tarefa.empreendimento_id, v_tarefa.wbs);
+
+  if p_atualizar_etapa and v_tarefa.etapa is not null then
+    select round(
+             sum(percentual_fisico * greatest(coalesce(data_fim - data_inicio, 0) + 1, 1))
+             / sum(greatest(coalesce(data_fim - data_inicio, 0) + 1, 1)),
+             2
+           )
+      into v_fisico
+      from cronograma_tarefas
+     where empreendimento_id = v_tarefa.empreendimento_id
+       and etapa = v_tarefa.etapa
+       and not resumo;
+
+    update cronograma c set
+      percentual_fisico = v_fisico,
+      status = case when c.status = 'PAUSADA' then c.status else
+        (case when v_fisico >= 100 then 'CONCLUIDA'
+              when v_fisico > 0 then 'EM_ANDAMENTO'
+              else 'NAO_INICIADA' end)::cronograma_status end,
+      atualizado_por = v_user
+    where c.empreendimento_id = v_tarefa.empreendimento_id
+      and c.etapa = v_tarefa.etapa;
+  end if;
+
+  return jsonb_build_object('etapa', v_tarefa.etapa, 'fisico_etapa', v_fisico);
+end;
+$$;
+
+revoke all on function public.recalcular_resumos_cronograma(uuid, text) from public, anon;
+grant execute on function public.recalcular_resumos_cronograma(uuid, text) to authenticated, service_role;
+revoke all on function public.atualizar_fisico_tarefa(uuid, numeric, boolean) from public, anon;
+grant execute on function public.atualizar_fisico_tarefa(uuid, numeric, boolean) to authenticated, service_role;

@@ -1,6 +1,10 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
+import { Modal } from '@/components/ui/Modal';
+import { useToast } from '@/components/ui/Toaster';
+import { atualizarFisicoTarefa } from '@/lib/actions/cronograma';
 import { fmtDate } from '@/lib/utils';
 import type { EtapaEap } from '@/types/db';
 
@@ -107,13 +111,109 @@ function NomeTarefa({
   );
 }
 
-export function TarefasLista({ tarefas }: { tarefas: Tarefa[] }) {
+type EtapaFisico = { etapa: string; percentual_fisico: number };
+
+type QuedaEtapa = { tarefa: Tarefa; valor: number; de: number; para: number };
+
+const diasDe = (t: Tarefa) =>
+  t.data_inicio && t.data_fim
+    ? Math.max((utc(t.data_fim) - utc(t.data_inicio)) / DIA_MS + 1, 1)
+    : 1;
+
+/** Mesma conta do banco: média das tarefas da etapa, ponderada pela duração. */
+function fisicoDaEtapa(tarefas: Tarefa[], editada: Tarefa, valor: number) {
+  let soma = 0;
+  let dias = 0;
+  for (const t of tarefas) {
+    if (t.resumo || t.etapa !== editada.etapa) continue;
+    const d = diasDe(t);
+    soma += (t.id === editada.id ? valor : Number(t.percentual_fisico)) * d;
+    dias += d;
+  }
+  return dias > 0 ? Math.round((soma / dias) * 100) / 100 : 0;
+}
+
+export function TarefasLista({ tarefas, etapas }: { tarefas: Tarefa[]; etapas: EtapaFisico[] }) {
   const { visiveis, recolhidos, alternar, recolherTudo, expandirTudo } = useArvore(tarefas);
   const hoje = hojeISO();
+  const router = useRouter();
+  const toast = useToast();
+  const [, startTransition] = useTransition();
+  const [locais, setLocais] = useState<Record<string, number>>({});
+  const [queda, setQueda] = useState<QuedaEtapa | null>(null);
+
+  const pctDe = (t: Tarefa) => locais[t.id] ?? Number(t.percentual_fisico);
+
+  const desfazer = (id: string) =>
+    setLocais((atual) => {
+      const novo = { ...atual };
+      delete novo[id];
+      return novo;
+    });
+
+  const salvar = (t: Tarefa, valor: number, atualizarEtapa: boolean) => {
+    setQueda(null);
+    setLocais((atual) => ({ ...atual, [t.id]: valor }));
+    startTransition(async () => {
+      const res = await atualizarFisicoTarefa({ id: t.id, percentual: valor, atualizar_etapa: atualizarEtapa });
+      if (!res.ok) {
+        desfazer(t.id);
+        toast({ kind: 'error', text: res.error });
+        return;
+      }
+      router.refresh();
+    });
+  };
+
+  const aoEditar = (t: Tarefa, digitado: number) => {
+    const valor = Math.min(100, Math.max(0, Number.isFinite(digitado) ? digitado : 0));
+    if (valor === pctDe(t)) return;
+
+    const atual = etapas.find((e) => e.etapa === t.etapa);
+    if (atual) {
+      const de = Number(atual.percentual_fisico);
+      const para = fisicoDaEtapa(tarefas, t, valor);
+      if (para < de) {
+        setLocais((l) => ({ ...l, [t.id]: valor }));
+        setQueda({ tarefa: t, valor, de, para });
+        return;
+      }
+    }
+    salvar(t, valor, true);
+  };
+
+  const cancelarQueda = () => {
+    if (queda) desfazer(queda.tarefa.id);
+    setQueda(null);
+  };
 
   return (
     <div className="space-y-2">
       <BotoesArvore onRecolher={recolherTudo} onExpandir={expandirTudo} />
+      <Modal open={!!queda} onClose={cancelarQueda} title="O % da etapa vai diminuir" size="sm">
+        {queda && (
+          <div className="space-y-4 text-sm">
+            <p className="text-text-dim">
+              Com esta alteração, a etapa <strong className="text-text">{queda.tarefa.etapa?.replaceAll('_', ' ')}</strong> passa
+              de <strong className="text-text">{queda.de.toFixed(0)}%</strong> para{' '}
+              <strong className="text-warn">{queda.para.toFixed(0)}%</strong>, porque o % da etapa é a média das
+              tarefas dela, ponderada pela duração.
+            </p>
+            <p className="text-text-dim">
+              Se as outras tarefas ainda não foram lançadas, salve só a tarefa: o % da etapa fica como está.
+            </p>
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <button type="button" className="btn-ghost w-full sm:w-auto" onClick={cancelarQueda}>Cancelar</button>
+              <button type="button" className="btn-ghost w-full sm:w-auto" onClick={() => salvar(queda.tarefa, queda.valor, true)}>
+                Atualizar a etapa também
+              </button>
+              <button type="button" className="btn-primary w-full sm:w-auto" onClick={() => salvar(queda.tarefa, queda.valor, false)}>
+                Salvar só a tarefa
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
       <div className="overflow-hidden rounded-lg border border-border text-sm">
         <div className="hidden grid-cols-[5rem_minmax(0,1fr)_11rem_9rem_10rem] gap-3 bg-bg-3 px-3 py-2 text-text-dim md:grid">
           <span>EAP</span>
@@ -123,8 +223,8 @@ export function TarefasLista({ tarefas }: { tarefas: Tarefa[] }) {
           <span>Etapa</span>
         </div>
         {visiveis.map((t) => {
-          const pct = Math.min(100, Math.max(0, Number(t.percentual_fisico)));
-          const s = situacao(t, hoje);
+          const pct = Math.min(100, Math.max(0, pctDe(t)));
+          const s = situacao({ ...t, percentual_fisico: pct }, hoje);
           return (
             <div
               key={t.id}
@@ -139,7 +239,23 @@ export function TarefasLista({ tarefas }: { tarefas: Tarefa[] }) {
                 <span className={`h-1.5 flex-1 overflow-hidden rounded-full ${s.fundo}`}>
                   <span className={`block h-full rounded-full ${s.barra}`} style={{ width: `${pct}%` }} />
                 </span>
-                <span className={`w-9 text-right text-xs ${s.texto}`}>{pct.toFixed(0)}%</span>
+                {t.resumo ? (
+                  <span className={`w-16 text-right text-xs lg:w-14 ${s.texto}`}>{pct.toFixed(0)}%</span>
+                ) : (
+                  <input
+                    type="number"
+                    inputMode="numeric"
+                    min={0}
+                    max={100}
+                    step={5}
+                    defaultValue={pct}
+                    key={pct}
+                    aria-label={`% físico de ${t.nome}`}
+                    onBlur={(e) => aoEditar(t, e.target.valueAsNumber)}
+                    onKeyDown={(e) => e.key === 'Enter' && e.currentTarget.blur()}
+                    className="w-16 rounded border border-border bg-bg-2 px-1.5 py-1 text-right text-base focus:border-primary focus:outline-none lg:w-14 lg:py-0.5 lg:text-xs"
+                  />
+                )}
               </span>
               <span className="hidden truncate text-xs text-text-dim md:block">
                 {t.etapa ? t.etapa.replaceAll('_', ' ') : '—'}

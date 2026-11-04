@@ -24,6 +24,7 @@ export function ImportarMsProjectModal({
   empreendimentoId,
   etapas,
   etapasSalvas,
+  fisicoSalvo,
   totalTarefas,
 }: {
   open: boolean;
@@ -31,6 +32,7 @@ export function ImportarMsProjectModal({
   empreendimentoId: string;
   etapas: EtapaAtual[];
   etapasSalvas: ReadonlyMap<string, EtapaEap | null>;
+  fisicoSalvo: ReadonlyMap<string, number>;
   totalTarefas: number;
 }) {
   const router = useRouter();
@@ -46,6 +48,7 @@ export function ImportarMsProjectModal({
   const [atualizarFisico, setAtualizarFisico] = useState(false);
   const [atualizarCusto, setAtualizarCusto] = useState(false);
   const [dividirCusto, setDividirCusto] = useState(true);
+  const [manterFisico, setManterFisico] = useState(true);
 
   const limpar = () => {
     setArquivo('');
@@ -57,6 +60,7 @@ export function ImportarMsProjectModal({
     setAtualizarFisico(false);
     setAtualizarCusto(false);
     setDividirCusto(true);
+    setManterFisico(true);
   };
 
   const fechar = () => {
@@ -99,8 +103,11 @@ export function ImportarMsProjectModal({
   };
 
   const custoDe = (t: MspTask) => (dividirCusto ? t.custo / 100 : t.custo);
+  const pctDe = (t: MspTask) =>
+    manterFisico && !t.resumo ? (fisicoSalvo.get(t.uid) ?? t.pct) : t.pct;
   const folhas = tasks.filter((t) => !t.resumo);
-  const temFisico = folhas.some((t) => t.pct > 0);
+  const lancadas = folhas.filter((t) => fisicoSalvo.has(t.uid)).length;
+  const temFisico = folhas.some((t) => pctDe(t) > 0);
   const temCusto = folhas.some((t) => t.custo > 0);
   const semEtapa = tasks.filter((t, i) => !t.resumo && !mapa[i]).length;
 
@@ -142,7 +149,7 @@ export function ImportarMsProjectModal({
           nome: t.nome,
           data_inicio: t.inicio,
           data_fim: t.fim,
-          percentual_fisico: t.pct,
+          percentual_fisico: pctDe(t),
           custo_orcado: Number(custoDe(t).toFixed(2)),
           etapa: mapa[i],
         })),
@@ -194,6 +201,20 @@ export function ImportarMsProjectModal({
             )}
 
             <div className="space-y-2 text-sm">
+              {lancadas > 0 && (
+                <label className="flex cursor-pointer items-start gap-2">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5"
+                    checked={manterFisico}
+                    onChange={(e) => setManterFisico(e.target.checked)}
+                  />
+                  <span>
+                    Manter o % físico lançado no sistema em {lancadas} {lancadas === 1 ? 'tarefa' : 'tarefas'}
+                    <span className="block text-xs text-text-dim">Desmarque para usar o % do arquivo nessas tarefas.</span>
+                  </span>
+                </label>
+              )}
               <label className="flex cursor-pointer items-start gap-2">
                 <input
                   type="checkbox"
@@ -212,8 +233,8 @@ export function ImportarMsProjectModal({
                   onChange={(e) => setAtualizarFisico(e.target.checked)}
                 />
                 <span>
-                  Substituir o % físico das etapas pelo do arquivo
-                  {!temFisico && <span className="block text-xs text-text-dim">O arquivo está com 0% em todas as tarefas, então o avanço lançado no sistema fica como está.</span>}
+                  Substituir o % físico das etapas pelo calculado das tarefas
+                  {!temFisico && <span className="block text-xs text-text-dim">Todas as tarefas estão com 0%, então o avanço lançado no sistema fica como está.</span>}
                 </span>
               </label>
               {temCusto && (
@@ -286,7 +307,7 @@ export function ImportarMsProjectModal({
                         {t.nome}
                       </td>
                       <td className="whitespace-nowrap px-3 py-1 text-text-dim">{periodo(t.inicio, t.fim)}</td>
-                      <td className="px-3 py-1 text-right text-text-dim">{t.pct.toFixed(0)}%</td>
+                      <td className="px-3 py-1 text-right text-text-dim">{pctDe(t).toFixed(0)}%</td>
                       {temCusto && <td className="px-3 py-1 text-right">{fmtBRL(custoDe(t))}</td>}
                       <td className="px-3 py-1">
                         <select
