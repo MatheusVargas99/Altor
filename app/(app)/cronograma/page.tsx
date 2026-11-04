@@ -65,11 +65,25 @@ export default async function CronogramaPage({
     0,
   );
   const totalPago = rows.reduce((s, x) => s + Number(x.custo_pago || 0), 0);
+  // Média das tarefas folha ponderada pela duração, como nos grupos e etapas.
+  // Sem cronograma importado, vale o avanço das etapas.
+  const folhas = tarefas
+    .filter((t) => !t.resumo)
+    .map((t) => ({
+      pct: Number(t.percentual_fisico || 0),
+      dias:
+        t.data_inicio && t.data_fim
+          ? Math.max((Date.parse(t.data_fim) - Date.parse(t.data_inicio)) / 86_400_000 + 1, 1)
+          : 1,
+    }));
+  const diasTotais = folhas.reduce((s, t) => s + t.dias, 0);
   const pctFisico =
-    rows.reduce(
-      (s, x) => s + Number(x.peso || 0) * Number(x.percentual_fisico || 0),
-      0,
-    ) / 100;
+    diasTotais > 0
+      ? folhas.reduce((s, t) => s + t.pct * t.dias, 0) / diasTotais
+      : rows.reduce(
+          (s, x) => s + Number(x.peso || 0) * Number(x.percentual_fisico || 0),
+          0,
+        );
 
   return (
     <div className="p-4 md:p-6 space-y-5">
