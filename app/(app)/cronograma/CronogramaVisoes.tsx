@@ -5,10 +5,9 @@ import { ImportarMsProjectModal } from './ImportarMsProjectModal';
 import { TarefasGantt, TarefasLista, type Tarefa } from './CronogramaTarefas';
 import type { EtapaEap } from '@/types/db';
 
-type Visao = 'etapas' | 'tarefas' | 'gantt';
+type Visao = 'tarefas' | 'gantt';
 
 const VISOES: { valor: Visao; label: string }[] = [
-  { valor: 'etapas',  label: 'Etapas' },
   { valor: 'tarefas', label: 'Tarefas' },
   { valor: 'gantt',   label: 'Gantt' },
 ];
@@ -17,7 +16,6 @@ export function CronogramaVisoes({
   empreendimentoId,
   etapas,
   tarefas,
-  children,
 }: {
   empreendimentoId: string;
   etapas: {
@@ -27,9 +25,8 @@ export function CronogramaVisoes({
     percentual_fisico: number;
   }[];
   tarefas: Tarefa[];
-  children: React.ReactNode;
 }) {
-  const [visao, setVisao] = useState<Visao>('etapas');
+  const [visao, setVisao] = useState<Visao>('tarefas');
   const [importando, setImportando] = useState(false);
 
   const { etapasSalvas, fisicoSalvo } = useMemo(() => {
@@ -45,39 +42,43 @@ export function CronogramaVisoes({
     return { etapasSalvas, fisicoSalvo };
   }, [tarefas]);
 
-  const atual = tarefas.length > 0 ? visao : 'etapas';
+  const temTarefas = tarefas.length > 0;
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        {tarefas.length > 0 ? (
+      {temTarefas ? (
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <div role="tablist" aria-label="Visão do cronograma" className="inline-flex rounded-md border border-border p-0.5">
             {VISOES.map((v) => (
               <button
                 key={v.valor}
                 type="button"
                 role="tab"
-                aria-selected={atual === v.valor}
+                aria-selected={visao === v.valor}
                 onClick={() => setVisao(v.valor)}
                 className={`min-h-[40px] rounded px-3 text-sm md:min-h-0 md:py-1 ${
-                  atual === v.valor ? 'bg-primary font-medium text-bg' : 'text-text-dim hover:text-text'
+                  visao === v.valor ? 'bg-primary font-medium text-bg' : 'text-text-dim hover:text-text'
                 }`}
               >
                 {v.label}
               </button>
             ))}
           </div>
-        ) : (
-          <span />
-        )}
-        <button type="button" className="btn-ghost text-sm" onClick={() => setImportando(true)}>
-          Importar MS Project
-        </button>
-      </div>
+          <button type="button" className="btn-ghost text-sm" onClick={() => setImportando(true)}>
+            Importar MS Project
+          </button>
+        </div>
+      ) : (
+        <div className="card space-y-3 p-8 text-center">
+          <p className="text-sm text-text-dim">Esta obra ainda não tem cronograma importado.</p>
+          <button type="button" className="btn-primary mx-auto" onClick={() => setImportando(true)}>
+            Importar MS Project
+          </button>
+        </div>
+      )}
 
-      {atual === 'etapas' && children}
-      {atual === 'tarefas' && <TarefasLista tarefas={tarefas} etapas={etapas} />}
-      {atual === 'gantt' && <TarefasGantt tarefas={tarefas} />}
+      {temTarefas && visao === 'tarefas' && <TarefasLista tarefas={tarefas} etapas={etapas} />}
+      {temTarefas && visao === 'gantt' && <TarefasGantt tarefas={tarefas} />}
 
       <ImportarMsProjectModal
         open={importando}

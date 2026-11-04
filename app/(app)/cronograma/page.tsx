@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { fmtBRL } from '@/lib/utils';
-import { CronogramaClient } from './CronogramaClient';
 import { CronogramaVisoes } from './CronogramaVisoes';
 import type { Tarefa } from './CronogramaTarefas';
 import type { Empreendimento } from '@/types/db';
@@ -76,7 +75,7 @@ export default async function CronogramaPage({
     <div className="p-4 md:p-6 space-y-5">
       <PageHeader
         title="Cronograma físico-financeiro"
-        description="EAP padrão criada automaticamente por empreendimento. Comprometido e pago vêm das contas a pagar de cada etapa. Selecione a obra ou importe o cronograma do MS Project."
+        description="Selecione a obra e importe o cronograma do MS Project. Comprometido e pago vêm das contas a pagar."
       />
 
       <div className="flex flex-wrap gap-2 mb-2">
@@ -133,9 +132,7 @@ export default async function CronogramaPage({
             </div>
           </div>
 
-          <CronogramaVisoes empreendimentoId={obraId} etapas={rows} tarefas={tarefas}>
-            <CronogramaClient rows={rows} empreendimentoId={obraId} />
-          </CronogramaVisoes>
+          <CronogramaVisoes empreendimentoId={obraId} etapas={rows} tarefas={tarefas} />
         </>
       )}
     </div>
