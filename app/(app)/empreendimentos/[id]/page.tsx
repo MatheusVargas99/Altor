@@ -43,11 +43,10 @@ export default async function EmpreendimentoDetalhe({
     0,
   );
   const totalPago = etapas.reduce((s, x) => s + (Number(x.custo_pago) || 0), 0);
-  const percentualFisico =
-    etapas.reduce(
-      (s, x) => s + Number(x.peso || 0) * Number(x.percentual_fisico || 0),
-      0,
-    ) / 100;
+  const percentualFisico = etapas.reduce(
+    (s, x) => s + Number(x.peso || 0) * Number(x.percentual_fisico || 0),
+    0,
+  );
 
   return (
     <div className="p-4 md:p-6 space-y-6">
