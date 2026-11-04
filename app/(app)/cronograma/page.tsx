@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { fmtBRL } from '@/lib/utils';
 import { CronogramaClient } from './CronogramaClient';
+import { CronogramaVisoes } from './CronogramaVisoes';
+import type { Tarefa } from './CronogramaTarefas';
 import type { Empreendimento } from '@/types/db';
 
 export const dynamic = 'force-dynamic';
@@ -40,13 +42,22 @@ export default async function CronogramaPage({
   const obraId = searchParams.obra ?? obras[0]?.id ?? null;
 
   let rows: Row[] = [];
+  let tarefas: Tarefa[] = [];
   if (obraId) {
-    const { data } = await supabase
-      .from('v_cronograma_obra')
-      .select('*')
-      .eq('empreendimento_id', obraId)
-      .order('ordem');
-    rows = (data as Row[]) ?? [];
+    const [etapasRes, tarefasRes] = await Promise.all([
+      supabase
+        .from('v_cronograma_obra')
+        .select('*')
+        .eq('empreendimento_id', obraId)
+        .order('ordem'),
+      supabase
+        .from('cronograma_tarefas')
+        .select('id, uid_msproject, ordem, wbs, nivel, resumo, marco, nome, data_inicio, data_fim, percentual_fisico, etapa')
+        .eq('empreendimento_id', obraId)
+        .order('ordem'),
+    ]);
+    rows = (etapasRes.data as Row[]) ?? [];
+    tarefas = (tarefasRes.data as Tarefa[]) ?? [];
   }
 
   const totalOrcado = rows.reduce((s, x) => s + Number(x.custo_orcado || 0), 0);
@@ -65,7 +76,7 @@ export default async function CronogramaPage({
     <div className="p-4 md:p-6 space-y-5">
       <PageHeader
         title="Cronograma físico-financeiro"
-        description="EAP padrão criada automaticamente por empreendimento. Comprometido e pago vêm das contas a pagar de cada etapa. Selecione a obra."
+        description="EAP padrão criada automaticamente por empreendimento. Comprometido e pago vêm das contas a pagar de cada etapa. Selecione a obra ou importe o cronograma do MS Project."
       />
 
       <div className="flex flex-wrap gap-2 mb-2">
@@ -122,7 +133,9 @@ export default async function CronogramaPage({
             </div>
           </div>
 
-          <CronogramaClient rows={rows} empreendimentoId={obraId} />
+          <CronogramaVisoes empreendimentoId={obraId} etapas={rows} tarefas={tarefas}>
+            <CronogramaClient rows={rows} empreendimentoId={obraId} />
+          </CronogramaVisoes>
         </>
       )}
     </div>

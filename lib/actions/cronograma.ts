@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { createClient } from '@/lib/supabase/server';
+import { importCronogramaSchema, type ImportCronogramaInput } from '@/lib/schemas/cronograma-import';
 import type { CronogramaStatus } from '@/types/db';
 
 type Result<T = void> = { ok: true; data?: T } | { ok: false; error: string };
@@ -31,6 +32,27 @@ export async function updateCronogramaEtapa(
   if (error) return { ok: false, error: error.message };
   revalidatePath('/cronograma');
   return { ok: true };
+}
+
+export async function importarCronogramaMsProject(
+  input: ImportCronogramaInput,
+): Promise<Result<{ tarefas: number; etapas: number }>> {
+  const { supabase } = await requireUser();
+  const parsed = importCronogramaSchema.safeParse(input);
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? 'Dados inválidos' };
+  }
+  const v = parsed.data;
+  const { data, error } = await supabase.rpc('importar_cronograma_msproject', {
+    p_empreendimento_id: v.empreendimento_id,
+    p_tarefas: v.tarefas,
+    p_atualizar_datas: v.atualizar_datas,
+    p_atualizar_fisico: v.atualizar_fisico,
+    p_atualizar_custo: v.atualizar_custo,
+  });
+  if (error) return { ok: false, error: error.message };
+  revalidatePath('/cronograma');
+  return { ok: true, data: data as { tarefas: number; etapas: number } };
 }
 
 const EAP_PADRAO = [
