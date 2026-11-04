@@ -92,7 +92,8 @@ export async function parseMsProjectMpp(bytes: Uint8Array): Promise<MspParseResu
     };
 
     // O Project pode manter mais de um registro do mesmo UID; vale o último.
-    const porUid = new Map<number, MspTask & { ativa: boolean }>();
+    const porUid = new Map<number, MspTask>();
+    const desativadas = new Set<string>();
     registros.forEach((registro, i) => {
       if (registro.length <= TAMANHO_MINIMO) return;
       const uid = u32(i, M.NATIVE.UNIQUE_ID);
@@ -101,6 +102,9 @@ export async function parseMsProjectMpp(bytes: Uint8Array): Promise<MspParseResu
       const bruto = offset === undefined ? null : M.readVar(varData, offset);
       const nome = bruto ? M.decodeUnicode(bruto).trim() : '';
       if (!nome) return; // linha em branco do cronograma
+
+      if (flag(i, CAMPO_ATIVA) === false) desativadas.add(String(uid));
+      else desativadas.delete(String(uid));
 
       porUid.set(uid, {
         uid: String(uid),
@@ -114,7 +118,6 @@ export async function parseMsProjectMpp(bytes: Uint8Array): Promise<MspParseResu
         fim: data(i, M.NATIVE.FINISH),
         pct: Math.max(0, Math.min(100, u16(i, M.NATIVE.PERCENT_COMPLETE) ?? 0)),
         custo: Math.max(0, f64(i, CAMPO_CUSTO) ?? 0),
-        ativa: flag(i, CAMPO_ATIVA) ?? true,
       });
     });
 
@@ -133,7 +136,7 @@ export async function parseMsProjectMpp(bytes: Uint8Array): Promise<MspParseResu
 
     const titulo = props.get(M.PROPS_TITLE);
     return {
-      tasks: ordenadas.filter((t) => t.ativa).map(({ ativa: _ativa, ...t }) => t),
+      tasks: ordenadas.filter((t) => !desativadas.has(t.uid)),
       projectName: (titulo ? M.decodeUnicode(titulo).trim() : '') || null,
     };
   } catch {
