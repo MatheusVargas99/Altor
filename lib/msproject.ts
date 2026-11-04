@@ -1,6 +1,6 @@
 // Leitura do cronograma do MS Project no formato XML (MSPDI).
 // No MS Project: Arquivo -> Salvar como -> tipo "XML (*.xml)".
-// Usa o DOMParser do navegador; o .mpp é binário e não é lido aqui.
+// Usa o DOMParser do navegador; o .mpp é lido em lib/msproject-mpp.ts.
 
 import type { EtapaEap } from '@/types/db';
 

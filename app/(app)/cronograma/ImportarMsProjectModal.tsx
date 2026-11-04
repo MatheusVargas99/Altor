@@ -74,12 +74,10 @@ export function ImportarMsProjectModal({
     if (!file) return;
     limpar();
     setArquivo(file.name);
-    if (/\.mpp$/i.test(file.name)) {
-      setErro('Esse é o arquivo .mpp do MS Project. Abra-o no MS Project, use Arquivo → Salvar como → tipo "XML (*.xml)" e selecione o .xml aqui.');
-      return;
-    }
     try {
-      const res = parseMsProjectXml(await file.text());
+      const res = /\.mpp$/i.test(file.name)
+        ? await (await import('@/lib/msproject-mpp')).parseMsProjectMpp(new Uint8Array(await file.arrayBuffer()))
+        : parseMsProjectXml(await file.text());
       if (res.error) return setErro(res.error);
       if (res.tasks.length === 0) return setErro('Nenhuma tarefa encontrada no arquivo.');
       setProjeto(res.projectName);
@@ -168,14 +166,14 @@ export function ImportarMsProjectModal({
     <Modal open={open} onClose={fechar} title="Importar cronograma do MS Project" size="xl">
       <div className="space-y-4">
         <div className="rounded border border-border bg-bg-3 p-3 text-xs leading-relaxed text-text-dim">
-          No MS Project: <strong className="text-text">Arquivo → Salvar como → tipo &quot;XML (*.xml)&quot;</strong>.
-          Depois selecione o <strong className="text-text">.xml</strong> aqui. As tarefas entram com a
-          hierarquia do arquivo e cada uma fica ligada a uma etapa do sistema, para as contas a pagar
-          continuarem caindo na etapa certa.
+          Selecione o arquivo <strong className="text-text">.mpp</strong> do MS Project, ou um{' '}
+          <strong className="text-text">.xml</strong> salvo por ele. As tarefas entram com a hierarquia
+          do arquivo e cada uma fica ligada a uma etapa do sistema, para as contas a pagar continuarem
+          caindo na etapa certa.
         </div>
 
         <label className="btn-ghost inline-flex max-w-full cursor-pointer">
-          <span className="truncate">{arquivo || 'Selecionar arquivo .xml'}</span>
+          <span className="truncate">{arquivo || 'Selecionar arquivo .mpp ou .xml'}</span>
           <input type="file" accept=".xml,.mpp,text/xml,application/xml" className="hidden" onChange={onArquivo} />
         </label>
 
