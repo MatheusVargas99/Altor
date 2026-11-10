@@ -34,9 +34,6 @@ export type CronoRow = {
   peso: number;
   percentual_fisico: number;
   status: string;
-  custo_orcado: number;
-  custo_comprometido: number;
-  custo_pago: number;
   data_inicio_prevista: string | null;
   data_fim_prevista: string | null;
 };
@@ -256,14 +253,6 @@ export function RelatoriosClient({
     }, {}),
   ).sort((a, b) => b[1].original - a[1].original);
 
-  // Custos por etapa (as contas a pagar apontam para as 14 etapas)
-  const totalOrcado = cronoRows.reduce((s, r) => s + Number(r.custo_orcado), 0);
-  const totalComprometido = cronoRows.reduce((s, r) => s + Number(r.custo_comprometido), 0);
-  const totalPago = cronoRows.reduce((s, r) => s + Number(r.custo_pago), 0);
-  const etapasComCusto = cronoRows.filter(
-    (r) => Number(r.custo_orcado) > 0 || Number(r.custo_comprometido) > 0 || Number(r.custo_pago) > 0,
-  );
-
   // Cronograma importado do MS Project. Sem ele, vale o avanço das etapas.
   const temTarefas = tarefas.length > 0;
   const calc = temTarefas ? calcularTarefas(tarefas, hoje) : [];
@@ -338,45 +327,6 @@ export function RelatoriosClient({
 
     const zebra = (i: number) => (i % 2 === 0 ? '#ffffff' : '#f9f7f3');
 
-    const custosEtapaHtml = etapasComCusto.length === 0 ? '' : `
-  <div class="sub-title">Custos por etapa</div>
-  <table>
-    <thead>
-      <tr>
-        <th>Marco</th>
-        <th>Etapa</th>
-        <th class="right">Orçado</th>
-        <th class="right">Compromet.</th>
-        <th class="right">Pago</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${etapasComCusto.map((r, i) => `<tr style="background:${zebra(i)}">
-        <td style="padding:6px 10px;font-weight:600;color:#B8923A;white-space:nowrap">${esc(r.marco)}</td>
-        <td style="padding:6px 10px;font-size:11px">${esc(r.etapa.replaceAll('_', ' '))}</td>
-        <td style="padding:6px 10px;text-align:right;white-space:nowrap">${Number(r.custo_orcado) > 0 ? fmtBRL(Number(r.custo_orcado)) : '—'}</td>
-        <td style="padding:6px 10px;text-align:right;white-space:nowrap">${Number(r.custo_comprometido) > 0 ? fmtBRL(Number(r.custo_comprometido)) : '—'}</td>
-        <td style="padding:6px 10px;text-align:right;white-space:nowrap">${Number(r.custo_pago) > 0 ? fmtBRL(Number(r.custo_pago)) : '—'}</td>
-      </tr>`).join('')}
-    </tbody>
-  </table>`;
-
-    const financeiroObraHtml = cronoRows.length === 0 ? '' : `
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;margin-top:12px;padding-top:12px;border-top:1px solid #e0d8cc">
-      <div style="padding:0 16px 0 0;border-right:1px solid #e0d8cc">
-        <div class="kpi-label">Total Orçado</div>
-        <div class="kpi-value">${fmtBRL(totalOrcado)}</div>
-      </div>
-      <div style="padding:0 16px;border-right:1px solid #e0d8cc">
-        <div class="kpi-label">Comprometido</div>
-        <div class="kpi-value" style="color:#B8923A">${fmtBRL(totalComprometido)}</div>
-      </div>
-      <div style="padding:0 0 0 16px">
-        <div class="kpi-label">Pago</div>
-        <div class="kpi-value" style="color:#1a6b3c">${fmtBRL(totalPago)}</div>
-      </div>
-    </div>`;
-
     const linhaTarefa = (t: TarefaCalc, i: number, comCaminho: boolean) => {
       const recuo = Math.max(0, t.nivel - 1) * 12;
       const nome = t.resumo ? `<strong>${esc(t.nome)}</strong>` : esc(t.nome);
@@ -434,7 +384,6 @@ export function RelatoriosClient({
         <div class="kpi-value">${concluidas} de ${folhas.length} concluídas${atrasadas > 0 ? ` <span style="font-size:11px;color:#a31515">· ${atrasadas} atrasada(s)</span>` : ''}</div>
       </div>
     </div>
-    ${financeiroObraHtml}
   </div>
   <div class="nota">Previsto: avanço linear de cada atividade entre início e término, ponderado pela duração. A barra preta marca o previsto.</div>
 
@@ -455,8 +404,7 @@ export function RelatoriosClient({
     ${cabecalhoTarefas}
     <tbody>${calc.map((t, i) => linhaTarefa(t, i, false)).join('')}</tbody>
   </table>
-
-  ${custosEtapaHtml}`;
+`;
 
     // Obra sem cronograma importado: mantém a visão pelas 14 etapas.
     const etapasHtml = temTarefas || cronoRows.length === 0 ? '' : `
@@ -470,7 +418,6 @@ export function RelatoriosClient({
     <div style="background:#e0d8cc;border-radius:4px;height:10px">
       <div style="background:linear-gradient(90deg,#B8923A,#E8C97A);height:10px;border-radius:4px;width:${Math.min(100, avancoReal).toFixed(1)}%"></div>
     </div>
-    ${financeiroObraHtml}
   </div>
 
   <table>
@@ -479,25 +426,16 @@ export function RelatoriosClient({
         <th>Marco</th>
         <th>Etapa</th>
         <th style="text-align:center">% Físico</th>
-        <th class="right">Orçado</th>
-        <th class="right">Compromet.</th>
-        <th class="right">Pago</th>
         <th style="text-align:center">Status</th>
         <th>Prev. Fim</th>
       </tr>
     </thead>
     <tbody>
       ${cronoRows.map((r, i) => {
-        const orcado = Number(r.custo_orcado);
-        const comprometido = Number(r.custo_comprometido);
-        const pago = Number(r.custo_pago);
         return `<tr style="background:${zebra(i)}">
           <td style="padding:6px 10px;font-weight:600;color:#B8923A;white-space:nowrap">${esc(r.marco)}</td>
           <td style="padding:6px 10px;font-size:11px">${esc(r.etapa.replaceAll('_', ' '))}</td>
           <td style="padding:6px 10px;min-width:90px">${progBar(Number(r.percentual_fisico))}</td>
-          <td style="padding:6px 10px;text-align:right;white-space:nowrap">${orcado > 0 ? fmtBRL(orcado) : '—'}</td>
-          <td style="padding:6px 10px;text-align:right;white-space:nowrap">${comprometido > 0 ? fmtBRL(comprometido) : '—'}</td>
-          <td style="padding:6px 10px;text-align:right;white-space:nowrap">${pago > 0 ? fmtBRL(pago) : '—'}</td>
           <td style="padding:6px 10px;text-align:center">${statusCronoBadge(r.status)}</td>
           <td style="padding:6px 10px;font-size:11px;white-space:nowrap">${fmtDate(r.data_fim_prevista)}</td>
         </tr>`;
@@ -1027,22 +965,6 @@ __MOBILE_BAR__
                 </div>
               </div>
             )}
-            {cronoRows.length > 0 && (
-              <div className="grid grid-cols-1 gap-1.5 pt-2 border-t border-border sm:grid-cols-3 sm:gap-3 sm:pt-1">
-                <div className="flex items-baseline justify-between gap-2 sm:block">
-                  <div className="text-xs text-text-dim">Orçado</div>
-                  <div className="text-sm font-semibold text-text tabular-nums">{fmtBRL(totalOrcado)}</div>
-                </div>
-                <div className="flex items-baseline justify-between gap-2 sm:block">
-                  <div className="text-xs text-text-dim">Comprometido</div>
-                  <div className="text-sm font-semibold text-warn tabular-nums">{fmtBRL(totalComprometido)}</div>
-                </div>
-                <div className="flex items-baseline justify-between gap-2 sm:block">
-                  <div className="text-xs text-text-dim">Pago</div>
-                  <div className="text-sm font-semibold text-success tabular-nums">{fmtBRL(totalPago)}</div>
-                </div>
-              </div>
-            )}
           </div>
 
           {temTarefas ? (
@@ -1101,7 +1023,7 @@ __MOBILE_BAR__
                 </table>
               </div>
               {!total && (
-                <p className="mt-2 text-xs text-text-dim">O PDF traz também o cronograma completo e os custos por etapa.</p>
+                <p className="mt-2 text-xs text-text-dim">O PDF traz também o cronograma completo.</p>
               )}
             </>
           ) : (
@@ -1112,8 +1034,6 @@ __MOBILE_BAR__
                     <th className="px-3 py-2 text-left whitespace-nowrap">Marco</th>
                     <th className="px-3 py-2 text-left whitespace-nowrap">Etapa</th>
                     <th className="px-3 py-2 text-center whitespace-nowrap">% Físico</th>
-                    <th className="px-3 py-2 text-right whitespace-nowrap">Orçado</th>
-                    <th className="px-3 py-2 text-right whitespace-nowrap">Comprometido</th>
                     <th className="px-3 py-2 text-left whitespace-nowrap">Prev. Fim</th>
                   </tr>
                 </thead>
@@ -1123,8 +1043,6 @@ __MOBILE_BAR__
                       <td className="px-3 py-1.5 font-semibold text-primary whitespace-nowrap">{r.marco}</td>
                       <td className="px-3 py-1.5 min-w-[140px]">{r.etapa.replaceAll('_', ' ')}</td>
                       <td className="px-3 py-1.5 text-center tabular-nums">{Number(r.percentual_fisico).toFixed(0)}%</td>
-                      <td className="px-3 py-1.5 text-right whitespace-nowrap tabular-nums">{Number(r.custo_orcado) > 0 ? fmtBRL(Number(r.custo_orcado)) : '—'}</td>
-                      <td className="px-3 py-1.5 text-right whitespace-nowrap tabular-nums">{Number(r.custo_comprometido) > 0 ? fmtBRL(Number(r.custo_comprometido)) : '—'}</td>
                       <td className="px-3 py-1.5 whitespace-nowrap">{fmtDate(r.data_fim_prevista)}</td>
                     </tr>
                   ))}

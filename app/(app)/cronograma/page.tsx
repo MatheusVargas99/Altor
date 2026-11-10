@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { fmtBRL } from '@/lib/utils';
 import { CronogramaVisoes } from './CronogramaVisoes';
 import type { Tarefa } from './CronogramaTarefas';
 import type { Empreendimento } from '@/types/db';
@@ -59,12 +58,6 @@ export default async function CronogramaPage({
     tarefas = (tarefasRes.data as Tarefa[]) ?? [];
   }
 
-  const totalOrcado = rows.reduce((s, x) => s + Number(x.custo_orcado || 0), 0);
-  const totalComprometido = rows.reduce(
-    (s, x) => s + Number(x.custo_comprometido || 0),
-    0,
-  );
-  const totalPago = rows.reduce((s, x) => s + Number(x.custo_pago || 0), 0);
   // Média das tarefas folha ponderada pela duração, como nos grupos e etapas.
   // Sem cronograma importado, vale o avanço das etapas.
   const folhas = tarefas
@@ -89,7 +82,7 @@ export default async function CronogramaPage({
     <div className="p-4 md:p-6 space-y-5">
       <PageHeader
         title="Cronograma físico-financeiro"
-        description="Selecione a obra e importe o cronograma do MS Project. Comprometido e pago vêm das contas a pagar."
+        description="Selecione a obra e importe o cronograma do MS Project."
       />
 
       <div className="flex flex-wrap gap-2 mb-2">
@@ -119,30 +112,18 @@ export default async function CronogramaPage({
 
       {obraId && (
         <>
-          <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-            <div className="card min-w-0 p-3 sm:p-4">
-              <div className="text-xs uppercase text-text-dim">Orçado</div>
-              <div className="mt-1 break-words text-base font-semibold text-text sm:text-xl">
-                {fmtBRL(totalOrcado)}
-              </div>
-            </div>
-            <div className="card min-w-0 p-3 sm:p-4">
-              <div className="text-xs uppercase text-text-dim">Comprometido</div>
-              <div className="mt-1 break-words text-base font-semibold text-info sm:text-xl">
-                {fmtBRL(totalComprometido)}
-              </div>
-            </div>
-            <div className="card min-w-0 p-3 sm:p-4">
-              <div className="text-xs uppercase text-text-dim">Pago</div>
-              <div className="mt-1 break-words text-base font-semibold text-success sm:text-xl">
-                {fmtBRL(totalPago)}
-              </div>
-            </div>
-            <div className="card min-w-0 p-3 sm:p-4">
-              <div className="text-xs uppercase text-text-dim">Avanço físico</div>
-              <div className="mt-1 break-words text-base font-semibold text-primary sm:text-xl">
+          <div className="card space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs uppercase text-text-dim">Avanço físico</span>
+              <span className="text-base font-semibold text-primary sm:text-xl">
                 {pctFisico.toFixed(1)}%
-              </div>
+              </span>
+            </div>
+            <div className="h-2.5 overflow-hidden rounded-full bg-bg-3">
+              <div
+                className="h-full rounded-full bg-primary"
+                style={{ width: `${Math.min(100, pctFisico)}%` }}
+              />
             </div>
           </div>
 
